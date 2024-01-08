@@ -1,0 +1,15 @@
+{
+  "name": "voting-app-server",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@trpc/client": "^10.45.0",
+    "@trpc/server": "^10.45.0",
+    "zod": "^3.22.4"
+  },
+  "scripts": {},
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
