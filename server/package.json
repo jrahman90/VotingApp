@@ -5,12 +5,14 @@
   "dependencies": {
     "@trpc/client": "^10.45.0",
     "@trpc/server": "^10.45.0",
+    "cors": "^2.8.5",
     "zod": "^3.22.4"
   },
   "scripts": {
     "dev": "ts-node index.ts"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }

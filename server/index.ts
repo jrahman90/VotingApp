@@ -1,5 +1,6 @@
 import { createHTTPServer } from "@trpc/server/adapters/standalone";
 import { z } from "zod";
+import cors from "cors";
 import { router, publicProcedure } from "./trpc";
 
 const users = [
@@ -38,7 +39,8 @@ const appRouter = router({
 export type AppRouter = typeof appRouter;
 
 const server = createHTTPServer({
+  middleware: cors(),
   router: appRouter,
 });
 
-server.listen(3000);
+server.listen(3001);
