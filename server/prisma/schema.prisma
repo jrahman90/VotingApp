@@ -1,0 +1,29 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Voter {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  firstAndMiddleName String  @map("first_and_middle_name")
+  lastName           String  @map("last_name")
+  streetAddress      String  @map("street_address")
+  city               String
+  state              String
+  phone              String
+  yob                Int
+  permanentAddress   String  @map("permanent_address")
+  comments           String?
+
+  @@map("voter")
+}

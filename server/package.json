@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@prisma/client": "^5.7.1",
     "@trpc/client": "^10.45.0",
     "@trpc/server": "^10.45.0",
     "cors": "^2.8.5",
@@ -13,6 +14,8 @@
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
+    "@types/node": "^20.10.7",
+    "prisma": "^5.7.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }
