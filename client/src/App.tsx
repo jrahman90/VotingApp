@@ -7,7 +7,9 @@ import { TRPC_REACT } from "./utils/trpc";
 function App() {
   const [count, setCount] = useState(0);
 
-  const { data } = TRPC_REACT.voting.getOne.useQuery();
+  const { data } = TRPC_REACT.voting.getOneDetailed.useQuery();
+  const { data: candidates } = TRPC_REACT.candidate.getAll.useQuery();
+  console.log("🚀 ~ App ~ candidates:", candidates);
   console.log("🚀 ~ App ~ data:", data);
 
   return (
