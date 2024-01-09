@@ -34,10 +34,10 @@ export const TRPC_CLIENT = TRPC_REACT.createClient({
   ],
 });
 
-// Inferred types
-export const getUser = async (id: number) => {
-  return await TRPC_PROXY_CLIENT.userById.query(id);
-};
-export const createUser = async (payload: { name: string }) => {
-  return await TRPC_PROXY_CLIENT.userCreate.mutate(payload);
-};
+// TODO: EXAMPLES
+// export const getUser = async (id: number) => {
+//   return await TRPC_PROXY_CLIENT.userById.query(id);
+// };
+// export const createUser = async (payload: { name: string }) => {
+//   return await TRPC_PROXY_CLIENT.userCreate.mutate(payload);
+// };
