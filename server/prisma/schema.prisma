@@ -10,11 +10,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  email    String @unique
+  password String
+
+  @@map("user")
+}
+
 model Voter {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
+  voterId            Int     @unique @map("voter_id")
   firstAndMiddleName String  @map("first_and_middle_name")
   lastName           String  @map("last_name")
   streetAddress      String  @map("street_address")
@@ -26,4 +38,64 @@ model Voter {
   comments           String?
 
   @@map("voter")
+}
+
+model Voting {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  name   String  @unique
+  Panels Panel[]
+
+  @@map("voting")
+}
+
+model Panel {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  panelName  String @map("panel_name")
+  panelColor String @map("panel_color")
+  textColor  String @map("text_color")
+  img        String
+
+  Candidates CandidatesOnPanels[]
+  Voting     Voting?              @relation(fields: [votingId], references: [id])
+  votingId   Int?                 @map("voting_id")
+
+  @@map("panel")
+}
+
+model Candidate {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  name     String   @unique
+  position Position
+
+  Panel CandidatesOnPanels[]
+
+  @@map("candidate")
+}
+
+model CandidatesOnPanels {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  Panel       Panel     @relation(fields: [panelId], references: [id])
+  panelId     Int       @map("panel_id")
+  Candidate   Candidate @relation(fields: [candidateId], references: [id])
+  candidateId Int       @map("candidate_id")
+
+  @@map("candidates_on_panels")
+}
+
+enum Position {
+  President
+  VicePresident
+  Secretary
 }
