@@ -106,7 +106,7 @@ const VotingPage = () => {
                   <h2 className="text-center">
                     <img
                       style={{ maxHeight: "40px", marginRight: "10px" }}
-                      src={panelData.img}
+                      src={panelData["panel-img"]}
                     />
                     {panelData.panelName}{" "}
                     <Button

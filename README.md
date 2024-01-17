@@ -1,3 +1,7 @@
+# Purpose
+
+Create a easy and cost effective voting app that can be used for voting in person.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
