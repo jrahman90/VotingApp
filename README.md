@@ -5,18 +5,12 @@
 node v20.9.0
 npm 10.1.0
 
-## Install dependencies
-
-```bash
-    cd server && npm install && cd ../client && npm install && cd ..
-```
-
 ## Initialize db locally
 
 Install postresql
 
 ```bash
-    brew install postresql
+    brew install postresql@14
 ```
 
 Run postresql service
@@ -31,10 +25,24 @@ Access postgres cli
     psql postgres
 ```
 
-Execute init sql script
+Execute init sql script -> $user is your current user
 
 ```bash
-    \i /Users/sebastianflor/workspace/VotingApp/initDB.sql
+    \i /Users/${user}/workspace/VotingApp/initDB.sql
+```
+
+## Install dependencies
+
+Server dependencies
+
+```bash
+    cd server && npm install && npx prisma migrate dev
+```
+
+Client dependencies
+
+```bash
+    cd client && npm install
 ```
 
 ## Run server
