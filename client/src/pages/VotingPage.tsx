@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CandidateType } from "../../../server";
 import { CandidatesList } from "../components/CandidatesList";
 import { TRPC_REACT } from "../utils/trpc";
+import React from "react";
 
 const initialState = {
   President: 0,
@@ -9,12 +10,19 @@ const initialState = {
   Secretary: 0,
 };
 
-export function VotingPage() {
+interface VotingPageProps {
+  device: string;
+  voterId: number;
+}
+
+export function VotingPage({ device, voterId }: VotingPageProps) {
   const { data, isError, isLoading } =
     TRPC_REACT.voting.getOneDetailed.useQuery();
   const { data: candidates } = TRPC_REACT.candidate.getAll.useQuery();
 
   const [selection, setSelection] = useState(initialState);
+
+  const isEnabled = !!voterId;
 
   const onVote = () => {
     if (
@@ -52,27 +60,42 @@ export function VotingPage() {
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
               {data?.name}
             </h1>
+            <p className="tracking-tight text-gray-900 mt-3">
+              Device: {device}
+            </p>
+            <p className="tracking-tight text-gray-900">Voter#: {voterId}</p>
           </div>
-          <CandidatesList
-            panels={data?.Panels || []}
-            candidates={candidates as unknown as CandidateType[]}
-            selection={selection}
-            setSelection={onSelection}
-          />
-          <div className="w-full flex justify-center my-20">
-            <button
-              className="bg-slate-200 hover:bg-slate-400 text-black font-bold py-2 px-4 rounded mr-4"
-              onClick={onClear}
-            >
-              Clear
-            </button>
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-              onClick={onVote}
-            >
-              Vote
-            </button>
-          </div>
+          {!isEnabled && (
+            <div className="mx-auto mt-10 max-w-2xl border-t border-gray-200 pt-10 sm:mt-16 sm:pt-16 lg:mx-0 lg:max-w-none">
+              <p className="tracking-tight text-gray-900 text-center">
+                Device not enabled. Please identify with your voter #
+              </p>
+            </div>
+          )}
+          {isEnabled && (
+            <React.Fragment>
+              <CandidatesList
+                panels={data?.Panels || []}
+                candidates={candidates as unknown as CandidateType[]}
+                selection={selection}
+                setSelection={onSelection}
+              />
+              <div className="w-full flex justify-center my-20">
+                <button
+                  className="bg-slate-200 hover:bg-slate-400 text-black font-bold py-2 px-4 rounded mr-4"
+                  onClick={onClear}
+                >
+                  Clear
+                </button>
+                <button
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                  onClick={onVote}
+                >
+                  Vote
+                </button>
+              </div>
+            </React.Fragment>
+          )}
         </div>
       )}
     </div>

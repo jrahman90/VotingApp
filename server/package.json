@@ -10,7 +10,7 @@
     "zod": "^3.22.4"
   },
   "scripts": {
-    "dev": "ts-node index.ts"
+    "dev": "npx prisma migrate dev && ts-node index.ts"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
