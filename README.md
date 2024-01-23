@@ -31,6 +31,12 @@ Execute init sql script -> $user is your current user
     \i /Users/${user}/workspace/VotingApp/initDB.sql
 ```
 
+Connect to db with psql command
+
+```bash
+    psql -U voting_user -d votingappdb
+```
+
 ## Install dependencies
 
 Server dependencies
