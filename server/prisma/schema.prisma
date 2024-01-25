@@ -36,6 +36,7 @@ model Voter {
   yob                Int
   permanentAddress   String  @map("permanent_address")
   comments           String?
+  Votes              Vote[]
 
   @@map("voter")
 }
@@ -47,6 +48,7 @@ model Voting {
 
   name   String  @unique
   Panels Panel[]
+  Votes  Vote[]
 
   @@map("voting")
 }
@@ -77,6 +79,7 @@ model Candidate {
   position Position
 
   Panel CandidatesOnPanels[]
+  Votes Vote[]
 
   @@map("candidate")
 }
@@ -92,6 +95,36 @@ model CandidatesOnPanels {
   candidateId Int       @map("candidate_id")
 
   @@map("candidates_on_panels")
+}
+
+model Device {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  name String @unique
+
+  Votes Vote[]
+
+  @@map("device")
+}
+
+model Vote {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  candidateId Int
+  votingId    Int
+  voterId     Int
+  deviceId    Int
+
+  Device    Device    @relation(fields: [deviceId], references: [id])
+  Candidate Candidate @relation(fields: [candidateId], references: [id])
+  Voter     Voter     @relation(fields: [voterId], references: [id])
+  Voting    Voting    @relation(fields: [votingId], references: [id])
+
+  @@map("vote")
 }
 
 enum Position {
