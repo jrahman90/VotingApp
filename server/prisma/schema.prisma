@@ -10,7 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model Staff {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
@@ -18,7 +18,7 @@ model User {
   email    String @unique
   password String
 
-  @@map("user")
+  @@map("staff")
 }
 
 model Voter {

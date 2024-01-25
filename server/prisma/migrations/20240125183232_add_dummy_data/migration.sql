@@ -62,3 +62,75 @@ VALUES
     (7, 3),
     (8, 3),
     (9, 3);
+
+-- This is an empty migration.
+INSERT INTO
+    device (name)
+VALUES
+    ('SanFrancisco#1'),
+    ('SanFrancisco#2'),
+    ('SanFrancisco#3');
+
+INSERT INTO
+    staff (email, password)
+VALUES
+    ('admin@mail.com', 'test1234'),
+    ('test@mail.com', 'test1234');
+
+INSERT INTO
+    voter (
+        voter_id,
+        first_and_middle_name,
+        last_name,
+        street_address,
+        city,
+        state,
+        phone,
+        yob,
+        permanent_address
+    )
+VALUES
+    (
+        100,
+        'John Hopkins',
+        'Hopkins',
+        'Elm Stree 1',
+        'San Francisco',
+        'California',
+        '+34 666 333 222',
+        1990,
+        'Elm Street 1, CA'
+    ),
+    (
+        101,
+        'James Koeln',
+        'Koeln',
+        'Elm Street 2',
+        'San Francisco',
+        'California',
+        '+34 666 333 222',
+        1990,
+        'Elm Street 2, CA'
+    ),
+    (
+        102,
+        'Rodger Austin',
+        'Austin',
+        'Elm Street 3',
+        'San Francisco',
+        'California',
+        '+34 666 333 222',
+        1990,
+        'Elm Street 3, CA'
+    ),
+    (
+        103,
+        'Tom Clancy',
+        'Clancy',
+        'Elm Street 4',
+        'San Francisco',
+        'California',
+        '+34 666 333 222',
+        1990,
+        'Elm Street 4, CA'
+    );
