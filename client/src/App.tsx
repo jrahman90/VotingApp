@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { VotingPage } from "./pages/VotingPage";
 import { TRPC_REACT } from "./utils/trpc";
 import { AuthPage } from "./pages/AuthPage";
+import { AdminPage } from "./pages/AdminPage";
 
 const router = createBrowserRouter([
   {
@@ -11,6 +12,10 @@ const router = createBrowserRouter([
   {
     path: "/vote",
     element: <VotingPage device="Computer#1 San Francisco" voterId={1234} />,
+  },
+  {
+    path: "/admin",
+    element: <AdminPage />,
   },
 ]);
 
