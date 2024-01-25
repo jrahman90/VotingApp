@@ -62,3 +62,9 @@ Client dependencies
 ```bash
     npm run client
 ```
+
+## Reset db
+
+```bash
+    cd server && npx prisma migrate reset
+```
