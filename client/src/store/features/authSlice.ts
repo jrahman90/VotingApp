@@ -2,23 +2,33 @@ import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
 
+interface IStaff {
+  email: string;
+  password: string;
+  id: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface IDevice {
+  id: number;
+  createdAt: string;
+  updatedAt: string;
+  name: string;
+}
+
 // Define a type for the slice state
 interface AuthState {
   type: "staff" | "device" | undefined;
-  email: string | undefined;
-  deviceName: string | undefined;
-  deviceId: number | undefined;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  metadata: any;
+  staff: IStaff | undefined;
+  device: IDevice | undefined;
 }
 
 // Define the initial state using that type
 const initialState: AuthState = {
   type: undefined,
-  email: undefined,
-  deviceId: undefined,
-  deviceName: undefined,
-  metadata: undefined,
+  staff: undefined,
+  device: undefined,
 };
 
 export const counterSlice = createSlice({
@@ -28,31 +38,21 @@ export const counterSlice = createSlice({
   reducers: {
     logout: (state) => {
       state.type = undefined;
-      state.email = undefined;
-      state.deviceName = undefined;
-      state.deviceId = undefined;
-      state.metadata = undefined;
+      state.staff = undefined;
+      state.device = undefined;
     },
-    loginStaff: (
-      state,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      action: PayloadAction<{ email: string; metadata: any }>
-    ) => {
-      state.email = action.payload.email;
-      state.metadata = action.payload.metadata;
+    loginStaff: (state, action: PayloadAction<{ staff: IStaff }>) => {
+      state.type = "staff";
+      state.staff = action.payload.staff;
     },
     registerDevice: (
       state,
       action: PayloadAction<{
-        deviceId: number;
-        deviceName: string;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        metadata: any;
+        device: IDevice;
       }>
     ) => {
-      state.deviceId = action.payload.deviceId;
-      state.deviceName = action.payload.deviceName;
-      state.metadata = action.payload.metadata;
+      state.type = "device";
+      state.device = action.payload.device;
     },
   },
 });

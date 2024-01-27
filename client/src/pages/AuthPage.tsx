@@ -1,12 +1,41 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { TRPC_REACT } from "../utils/trpc";
+import { useAppDispatch } from "../store/store";
+import {
+  loginStaff,
+  registerDevice as registerDeviceAction,
+} from "../store/features/authSlice";
 
 export function AuthPage() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [deviceName, setDeviceName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
+
+  const loginMutation = TRPC_REACT.staff.login.useMutation({
+    onSuccess(data) {
+      console.log("🚀 ~ onSuccess ~ data:", data);
+      dispatch(loginStaff({ staff: data }));
+      navigate("/admin");
+    },
+    onError(error) {
+      console.log("🚀 ~ onError ~ error:", error);
+    },
+  });
+
+  const registerDevice = TRPC_REACT.device.register.useMutation({
+    onSuccess(data) {
+      console.log("🚀 ~ onSuccess ~ data:", data);
+      dispatch(registerDeviceAction({ device: data }));
+      navigate("/vote");
+    },
+    onError(error) {
+      console.log("🚀 ~ onError ~ error:", error);
+    },
+  });
 
   const onRegister = () => {
     if (!deviceName) {
@@ -14,7 +43,7 @@ export function AuthPage() {
       return;
     }
     setErrors([]);
-    navigate("/vote");
+    registerDevice.mutate({ name: deviceName });
   };
   const onLogin = () => {
     console.log("🚀 ~ onLogin ~ onLogin:", onLogin);
@@ -23,7 +52,7 @@ export function AuthPage() {
       return;
     }
     setErrors([]);
-    navigate("/admin");
+    loginMutation.mutate({ email, password });
   };
 
   return (
