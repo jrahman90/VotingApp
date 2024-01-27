@@ -3,6 +3,9 @@ import { CandidateType } from "../../../server";
 import { CandidatesList } from "../components/CandidatesList";
 import { TRPC_REACT } from "../utils/trpc";
 import React from "react";
+import { useAppDispatch } from "../store/store";
+import { useNavigate } from "react-router-dom";
+import { logout } from "../store/features/authSlice";
 
 const initialState = {
   President: 0,
@@ -16,6 +19,8 @@ interface VotingPageProps {
 }
 
 export function VotingPage({ device, voterId }: VotingPageProps) {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { data, isError, isLoading } =
     TRPC_REACT.voting.getOneDetailed.useQuery();
   const { data: candidates } = TRPC_REACT.candidate.getAll.useQuery();
@@ -23,6 +28,11 @@ export function VotingPage({ device, voterId }: VotingPageProps) {
   const [selection, setSelection] = useState(initialState);
 
   const isEnabled = !!voterId;
+
+  const onLogout = () => {
+    dispatch(logout());
+    navigate("/admin");
+  };
 
   const onVote = () => {
     if (
@@ -44,6 +54,9 @@ export function VotingPage({ device, voterId }: VotingPageProps) {
 
   return (
     <div className="bg-white py-12 sm:py-14">
+      <button type="button" onClick={onLogout}>
+        logout
+      </button>
       {isLoading && (
         <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600 text-center">
           loading...
