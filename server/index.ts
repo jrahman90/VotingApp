@@ -13,15 +13,12 @@ import type {
   Vote,
   Device,
 } from "@prisma/client";
-import { EventEmitter } from "events";
-import { observable } from "@trpc/server/observable";
 import ws from "ws";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import { staffRouter } from "./services/staff/staff.router";
 import { deviceRouter } from "./services/device/device.router";
 import { voteRouter } from "./services/vote/vote.router";
-
-const ee = new EventEmitter();
+import { OnlineDevice } from "./emitter";
 
 const appRouter = router({
   voting: votingRouter,
@@ -31,15 +28,6 @@ const appRouter = router({
   device: deviceRouter,
   vote: voteRouter,
   voter: voteRouter,
-  subs: publicProcedure.subscription(() => {
-    return observable<any>((emit) => {
-      console.log("hi server");
-      emit.next("hi client!");
-      return () => {
-        console.log("bye server");
-      };
-    });
-  }),
 });
 
 // Export type router type signature,
@@ -53,6 +41,7 @@ export type VoterType = Voter;
 export type VotingType = Voting;
 export type VoteType = Vote;
 export type DeviceType = Device;
+export type OnlineDeviceType = OnlineDevice;
 
 const wss = new ws.Server({
   port: 3002,

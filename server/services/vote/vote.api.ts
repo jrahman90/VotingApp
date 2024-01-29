@@ -2,6 +2,12 @@ import { TRPCError } from "@trpc/server";
 import { prisma } from "../../prisma/client";
 import { publicProcedure } from "../../trpc";
 import { z } from "zod";
+import {
+  EVENTS,
+  OnlineDevice,
+  eventEmitter,
+  onlineDevices,
+} from "../../emitter";
 
 export const getAllVotes = publicProcedure.query(async () => {
   try {
@@ -63,6 +69,15 @@ export const vote = publicProcedure
       const votes = await prisma.vote.createMany({
         data,
       });
+
+      const device = onlineDevices
+        .getDevices()
+        .find((d) => d.id === deviceId) as OnlineDevice;
+      eventEmitter.emit(
+        EVENTS.CHANGE_DEVICE,
+        onlineDevices.updateDevice(deviceId, { ...device, voterId: undefined })
+      );
+
       return votes;
     } catch (error) {
       console.log("🚀 ~ vote ~ error:", error);

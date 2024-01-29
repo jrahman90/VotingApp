@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { CandidateType } from "../../../server";
+import { CandidateType, OnlineDeviceType } from "../../../server";
 import { CandidatesList } from "../components/CandidatesList";
 import { TRPC_REACT } from "../utils/trpc";
 import React from "react";
-import { useAppDispatch } from "../store/store";
+import { useAppDispatch, useAppSelector } from "../store/store";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../store/features/authSlice";
 
@@ -13,25 +13,59 @@ const initialState = {
   Secretary: 0,
 };
 
-interface VotingPageProps {
-  device: string;
-  voterId: number;
-}
-
-export function VotingPage({ device, voterId }: VotingPageProps) {
+export function VotingPage() {
+  const { device } = useAppSelector((s) => s.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+
   const { data, isError, isLoading } =
     TRPC_REACT.voting.getOneDetailed.useQuery();
   const { data: candidates } = TRPC_REACT.candidate.getAll.useQuery();
+
+  const [devices, setDevices] = useState<OnlineDeviceType[]>([]);
+
+  TRPC_REACT.device.getConnectedDevices.useSubscription(undefined, {
+    onData(data) {
+      console.log("🚀 ~ onData ~ data:", data);
+      setDevices(data as unknown as OnlineDeviceType[]);
+    },
+    onError(err) {
+      console.log("🚀 ~ onError ~ err:", err);
+    },
+  });
+
+  const voterId = devices.find((d) => d.name === device?.name)?.voterId;
+
+  const voteMutation = TRPC_REACT.vote.vote.useMutation({
+    onError(error) {
+      console.log("🚀  vote ~ onError ~ error:", error);
+    },
+    onSuccess(data) {
+      console.log("🚀 ~ vote onSuccess ~ data:", data);
+      alert("Success!");
+      onClear();
+    },
+  });
+
+  const logoutMutation = TRPC_REACT.device.unregister.useMutation({
+    onError(error) {
+      console.log("🚀 ~ logoutMutation onError ~ error:", error);
+    },
+    onSuccess(data) {
+      console.log("🚀 ~ logoutMutation onSuccess ~ data:", data);
+      dispatch(logout());
+      navigate("/");
+    },
+  });
 
   const [selection, setSelection] = useState(initialState);
 
   const isEnabled = !!voterId;
 
   const onLogout = () => {
-    dispatch(logout());
-    navigate("/admin");
+    logoutMutation.mutate({
+      name: device?.name as string,
+    });
   };
 
   const onVote = () => {
@@ -44,6 +78,14 @@ export function VotingPage({ device, voterId }: VotingPageProps) {
       return;
     }
     console.log("🚀 ~ VotingPage ~ selection:", selection);
+    voteMutation.mutate({
+      deviceId: device?.id as number,
+      voterId: voterId as number,
+      votingId: data?.id as number,
+      presidentId: selection.President,
+      vicePresidentId: selection.VicePresident,
+      secretaryId: selection.Secretary,
+    });
   };
   const onClear = () => {
     setSelection(initialState);
@@ -54,7 +96,11 @@ export function VotingPage({ device, voterId }: VotingPageProps) {
 
   return (
     <div className="bg-white py-12 sm:py-14">
-      <button type="button" onClick={onLogout}>
+      <button
+        type="button"
+        onClick={onLogout}
+        className="bg-red-400 hover:bg-red-600 text-black font-bold py-2 px-4 rounded mr-4"
+      >
         logout
       </button>
       {isLoading && (
@@ -74,7 +120,7 @@ export function VotingPage({ device, voterId }: VotingPageProps) {
               {data?.name}
             </h1>
             <p className="tracking-tight text-gray-900 mt-3">
-              Device: {device}
+              Device: {device?.name}
             </p>
             <p className="tracking-tight text-gray-900">Voter#: {voterId}</p>
           </div>

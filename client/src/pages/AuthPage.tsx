@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TRPC_REACT } from "../utils/trpc";
 import { useAppDispatch } from "../store/store";
 import {
   loginStaff,
+  logout,
   registerDevice as registerDeviceAction,
 } from "../store/features/authSlice";
 
@@ -54,6 +55,10 @@ export function AuthPage() {
     setErrors([]);
     loginMutation.mutate({ email, password });
   };
+
+  useEffect(() => {
+    dispatch(logout());
+  }, []);
 
   return (
     <div className="bg-white py-12 sm:py-14">

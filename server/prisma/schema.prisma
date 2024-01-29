@@ -121,7 +121,7 @@ model Vote {
 
   Device    Device    @relation(fields: [deviceId], references: [id])
   Candidate Candidate @relation(fields: [candidateId], references: [id])
-  Voter     Voter     @relation(fields: [voterId], references: [id])
+  Voter     Voter     @relation(fields: [voterId], references: [voterId])
   Voting    Voting    @relation(fields: [votingId], references: [id])
 
   @@map("vote")
