@@ -28,7 +28,10 @@ export function AdminPage() {
   return (
     <div className="bg-white py-12 sm:py-14">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl lg:mx-0">
+        <div
+          className="mx-auto max-w-7xl px-6 lg:px-8 flex-row justify-between border-b border-gray-200 pb-10"
+          style={{ display: "flex" }}
+        >
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
             Welcome back
           </h1>
@@ -37,18 +40,18 @@ export function AdminPage() {
             onClick={onLogout}
             className="bg-red-400 hover:bg-red-600 text-black font-bold py-2 px-4 rounded mr-4"
           >
-            logout
+            Logout
           </button>
         </div>
         {devices.length === 0 && (
-          <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600 text-center">
-            no devices online
+          <p className="my-5 line-clamp-3 text-lg leading-6 text-gray-600 text-left">
+            No devices online
           </p>
         )}
         {devices.length > 0 && (
           <>
-            <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600 text-center">
-              list of devices online
+            <p className="my-5 line-clamp-3 text-lg leading-6 text-gray-600 text-left">
+              List of devices online
             </p>
             <ul>
               <DevicesList devices={devices} />

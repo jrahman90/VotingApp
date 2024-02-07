@@ -39,6 +39,13 @@ export function VotingPage() {
   const voteMutation = TRPC_REACT.vote.vote.useMutation({
     onError(error) {
       console.log("🚀  vote ~ onError ~ error:", error);
+      alert(
+        JSON.stringify({
+          msg: error.message,
+          code: error.data?.code,
+          status: error.data?.httpStatus,
+        })
+      );
     },
     onSuccess(data) {
       console.log("🚀 ~ vote onSuccess ~ data:", data);
@@ -96,13 +103,6 @@ export function VotingPage() {
 
   return (
     <div className="bg-white py-12 sm:py-14">
-      <button
-        type="button"
-        onClick={onLogout}
-        className="bg-red-400 hover:bg-red-600 text-black font-bold py-2 px-4 rounded mr-4"
-      >
-        logout
-      </button>
       {isLoading && (
         <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600 text-center">
           loading...
@@ -116,18 +116,29 @@ export function VotingPage() {
       {!isError && !isLoading && (
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl lg:mx-0">
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              {data?.name}
-            </h1>
+            <div className="flex flex-row justify-between">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                {data?.name}
+              </h1>
+              <button
+                type="button"
+                onClick={onLogout}
+                className="bg-red-400 hover:bg-red-600 text-black font-bold py-2 px-4 rounded mr-4"
+              >
+                Close
+              </button>
+            </div>
             <p className="tracking-tight text-gray-900 mt-3">
-              Device: {device?.name}
+              Device name: <b>{device?.name}</b>
             </p>
-            <p className="tracking-tight text-gray-900">Voter#: {voterId}</p>
+            <p className="tracking-tight text-gray-900">
+              Voter number: <b>{voterId ?? "null"}</b>
+            </p>
           </div>
           {!isEnabled && (
             <div className="mx-auto mt-10 max-w-2xl border-t border-gray-200 pt-10 sm:mt-16 sm:pt-16 lg:mx-0 lg:max-w-none">
               <p className="tracking-tight text-gray-900 text-center">
-                Device not enabled. Please identify with your voter #
+                Device not enabled. Please identify with your voter number
               </p>
             </div>
           )}
