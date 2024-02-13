@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { prisma } from "../../prisma/client";
 import { publicProcedure } from "../../trpc";
+import { z } from "zod";
 
 export const getOneVoting = publicProcedure.query(async () => {
   try {
@@ -9,6 +10,68 @@ export const getOneVoting = publicProcedure.query(async () => {
     return voting;
   } catch (error) {
     console.log("🚀 ~ getOneVoting ~ error:", error);
+
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "An unexpected error occurred, please try again later.",
+      cause: error,
+    });
+  }
+});
+
+export const createVoting = publicProcedure
+  .input(z.object({ name: z.string() }))
+  .query(async ({ input }) => {
+    try {
+      const voting = await prisma.voting.create({
+        data: {
+          name: input.name,
+        },
+      });
+
+      return voting;
+    } catch (error) {
+      console.log("🚀 ~ createVoting ~ error:", error);
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "An unexpected error occurred, please try again later.",
+        cause: error,
+      });
+    }
+  });
+
+export const updateVoting = publicProcedure
+  .input(z.object({ name: z.string(), votingId: z.number() }))
+  .query(async ({ input }) => {
+    try {
+      const voting = await prisma.voting.update({
+        where: {
+          id: input.votingId,
+        },
+        data: {
+          name: input.name,
+        },
+      });
+
+      return voting;
+    } catch (error) {
+      console.log("🚀 ~ updateVoting ~ error:", error);
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "An unexpected error occurred, please try again later.",
+        cause: error,
+      });
+    }
+  });
+
+export const getAll = publicProcedure.query(async () => {
+  try {
+    const votings = await prisma.voting.findMany();
+    return votings;
+  } catch (error) {
+    console.log("🚀 ~ getAll ~ error:", error);
 
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",

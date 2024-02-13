@@ -1,7 +1,14 @@
 import { router } from "../../trpc";
-import { getAllPanels, getByVotingId } from "./panel.api";
+import {
+  getAllPanels,
+  getByVotingId,
+  createPanel,
+  updatePanel,
+} from "./panel.api";
 
 export const panelRouter = router({
   getAll: getAllPanels,
   getByVotingId: getByVotingId,
+  createPanel,
+  updatePanel,
 });
