@@ -21,7 +21,7 @@ export const getOneVoting = publicProcedure.query(async () => {
 
 export const createVoting = publicProcedure
   .input(z.object({ name: z.string() }))
-  .query(async ({ input }) => {
+  .mutation(async ({ input }) => {
     try {
       const voting = await prisma.voting.create({
         data: {
@@ -43,7 +43,7 @@ export const createVoting = publicProcedure
 
 export const updateVoting = publicProcedure
   .input(z.object({ name: z.string(), votingId: z.number() }))
-  .query(async ({ input }) => {
+  .mutation(async ({ input }) => {
     try {
       const voting = await prisma.voting.update({
         where: {
