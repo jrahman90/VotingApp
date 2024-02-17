@@ -2,6 +2,8 @@ import { useState } from "react";
 import { usePanels } from "../hooks/usePanels";
 import { useVotings } from "../hooks/useVotings";
 import { useCreateVoting } from "../hooks/useCreateVoting";
+import VotingsList from "./VotingsList";
+import { PanelType, VotingType } from "../../../server";
 
 function VotingForm() {
   const [votingName, setVotingName] = useState("");
@@ -71,35 +73,12 @@ export default function Votings() {
           {data?.length > 0 && (
             <>
               <VotingForm />
-              <ul>
-                {data.map((v) => {
-                  const votingPanels =
-                    panels?.filter((p) => p.votingId === v.id) || [];
-                  const isSelected = selected === v.id;
-                  return (
-                    <li
-                      className="text-center p-5 bg-slate-100 hover:bg-slate-200 cursor-pointer rounded mb-5"
-                      key={v.id}
-                      onClick={() => onClickVoting(v.id)}
-                    >
-                      <p className={isSelected ? "mb-4" : ""}>{v.name}</p>
-                      {isSelected &&
-                        votingPanels?.map((p) => (
-                          <p
-                            key={p.id}
-                            className="mb-4 p-4"
-                            style={{
-                              color: p.textColor,
-                              backgroundColor: p.panelColor,
-                            }}
-                          >
-                            {p.panelName}
-                          </p>
-                        ))}
-                    </li>
-                  );
-                })}
-              </ul>
+              <VotingsList
+                data={data as VotingType[]}
+                onClickVoting={onClickVoting}
+                panels={panels as PanelType[]}
+                selected={selected as number}
+              />
             </>
           )}
         </>

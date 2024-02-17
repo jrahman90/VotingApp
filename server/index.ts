@@ -34,13 +34,34 @@ const appRouter = router({
 // NOT the router itself.
 export type AppRouter = typeof appRouter;
 
-export type CandidateType = Candidate;
-export type PanelType = Panel;
-export type StaffType = Staff;
-export type VoterType = Voter;
-export type VotingType = Voting;
-export type VoteType = Vote;
-export type DeviceType = Device;
+export type CandidateType = Candidate & {
+  createdAt: string;
+  updatedAt: string;
+};
+export type PanelType = Panel & {
+  createdAt: string;
+  updatedAt: string;
+};
+export type StaffType = Staff & {
+  createdAt: string;
+  updatedAt: string;
+};
+export type VoterType = Voter & {
+  createdAt: string;
+  updatedAt: string;
+};
+export type VotingType = Voting & {
+  createdAt: string;
+  updatedAt: string;
+};
+export type VoteType = Vote & {
+  createdAt: string;
+  updatedAt: string;
+};
+export type DeviceType = Device & {
+  createdAt: string;
+  updatedAt: string;
+};
 export type OnlineDeviceType = OnlineDevice;
 
 const wss = new ws.Server({

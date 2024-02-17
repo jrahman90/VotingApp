@@ -46,15 +46,10 @@ export function AdminPage() {
           >
             <a
               href="#tabs-devices"
-              className={`my-2 block border-x-0 border-b-2 border-t-0 border-transparent px-7 pb-3.5 pt-4 text-xs font-medium uppercase leading-tight text-neutral-500 hover:isolate hover:border-transparent hover:bg-neutral-100 focus:isolate focus:border-transparent border-primary   ${
+              className={`my-2 block border-x-0 border-b-2 border-t-0 border-transparent px-7 pb-3.5 pt-4 text-xs font-medium uppercase leading-tight hover:isolate hover:border-transparent hover:bg-neutral-100 focus:isolate focus:border-transparent border-primary ${
                 activeTab === "devices" ? "text-blue-600" : "text-neutral-400"
               }`}
-              data-te-toggle="pill"
-              data-te-target="#tabs-home01"
-              data-te-nav-active
               role="tab"
-              aria-controls="tabs-home01"
-              aria-selected="true"
             >
               Devices
             </a>
@@ -66,14 +61,10 @@ export function AdminPage() {
           >
             <a
               href="#tabs-votings"
-              className={`my-2 block border-x-0 border-b-2 border-t-0 border-transparent px-7 pb-3.5 pt-4 text-xs font-medium uppercase leading-tight text-neutral-500 hover:isolate hover:border-transparent hover:bg-neutral-100 focus:isolate focus:border-transparent border-primary   ${
+              className={`my-2 block border-x-0 border-b-2 border-t-0 border-transparent px-7 pb-3.5 pt-4 text-xs font-medium uppercase leading-tight hover:isolate hover:border-transparent hover:bg-neutral-100 focus:isolate focus:border-transparent border-primary ${
                 activeTab === "votings" ? "text-blue-600" : "text-neutral-400"
               }`}
-              data-te-toggle="pill"
-              data-te-target="#tabs-profile01"
               role="tab"
-              aria-controls="tabs-profile01"
-              aria-selected="false"
             >
               Votings
             </a>
@@ -87,8 +78,6 @@ export function AdminPage() {
             } opacity-100 transition-opacity duration-150 ease-linear`}
             id="tabs-devices"
             role="tabpanel"
-            aria-labelledby="tabs-home-tab01"
-            data-te-tab-active
           >
             <Devices />
           </div>
@@ -97,8 +86,6 @@ export function AdminPage() {
               activeTab === "votings" ? "block" : "hidden"
             } opacity-100 transition-opacity duration-150 ease-linear`}
             id="tabs-votings"
-            role="tabpanel"
-            aria-labelledby="tabs-profile-tab01"
           >
             <Votings />
           </div>
