@@ -1,6 +1,6 @@
 import { createHTTPServer } from "@trpc/server/adapters/standalone";
 import cors from "cors";
-import { publicProcedure, router } from "./trpc";
+import { router } from "./trpc";
 import { votingRouter } from "./services/voting/voting.router";
 import { candidateRouter } from "./services/candidate/candidate.router";
 import { panelRouter } from "./services/panel/panel.router";

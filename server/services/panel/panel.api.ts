@@ -29,7 +29,7 @@ export const createPanel = publicProcedure
       votingId: z.number(),
     })
   )
-  .query(async ({ input }) => {
+  .mutation(async ({ input }) => {
     try {
       const { img, panelColor, panelName, textColor, votingId } = input;
       const panel = await prisma.panel.create({
@@ -65,7 +65,7 @@ export const updatePanel = publicProcedure
       panelId: z.number(),
     })
   )
-  .query(async ({ input }) => {
+  .mutation(async ({ input }) => {
     try {
       const { img, panelColor, panelName, textColor, votingId, panelId } =
         input;

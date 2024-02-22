@@ -4,12 +4,15 @@ import { useAppDispatch } from "../store/store";
 import Devices from "../components/Devices";
 import { useState } from "react";
 import Votings from "../components/Votings";
+import Panels from "../components/Panels";
 
 export function AdminPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<"devices" | "votings">("devices");
+  const [activeTab, setActiveTab] = useState<"devices" | "votings" | "panels">(
+    "devices"
+  );
 
   const onLogout = () => {
     dispatch(logout());
@@ -69,6 +72,21 @@ export function AdminPage() {
               Votings
             </a>
           </li>
+          <li
+            role="presentation"
+            className="flex-auto text-center"
+            onClick={() => setActiveTab("panels")}
+          >
+            <a
+              href="#tabs-panels"
+              className={`my-2 block border-x-0 border-b-2 border-t-0 border-transparent px-7 pb-3.5 pt-4 text-xs font-medium uppercase leading-tight hover:isolate hover:border-transparent hover:bg-neutral-100 focus:isolate focus:border-transparent border-primary ${
+                activeTab === "panels" ? "text-blue-600" : "text-neutral-400"
+              }`}
+              role="tab"
+            >
+              Panels
+            </a>
+          </li>
         </ul>
 
         <div className="mb-6">
@@ -88,6 +106,14 @@ export function AdminPage() {
             id="tabs-votings"
           >
             <Votings />
+          </div>
+          <div
+            className={`${
+              activeTab === "panels" ? "block" : "hidden"
+            } opacity-100 transition-opacity duration-150 ease-linear`}
+            id="tabs-votings"
+          >
+            <Panels />
           </div>
         </div>
       </div>
