@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { OnlineDeviceType } from "../../../server";
 import { CandidatesList } from "../components/CandidatesList";
 import { TRPC_REACT } from "../utils/trpc";
 import React from "react";
@@ -8,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { logout } from "../store/features/authSlice";
 import { useAppAlert } from "../utils/alerts";
 import Modal from "react-bootstrap/Modal";
+import type { OnlineDevice } from "../utils/firebaseApi";
 
 interface VotingDetailed {
   id: number;
@@ -63,12 +63,12 @@ export function VotingPage() {
     TRPC_REACT.voting.getOneDetailed.useQuery();
   const votingData = data as VotingDetailed | undefined;
 
-  const [devices, setDevices] = useState<OnlineDeviceType[]>([]);
+  const [devices, setDevices] = useState<OnlineDevice[]>([]);
 
   TRPC_REACT.device.getConnectedDevices.useSubscription(undefined, {
     onData(data) {
       console.log("🚀 ~ onData ~ data:", data);
-      setDevices(data as unknown as OnlineDeviceType[]);
+      setDevices(data as OnlineDevice[]);
     },
     onError(err) {
       console.log("🚀 ~ onError ~ err:", err);

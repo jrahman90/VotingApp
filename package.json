@@ -5,7 +5,13 @@
   "main": "index.js",
   "scripts": {
     "server": "cd server && npm run dev",
-    "client": "cd client && npm run dev"
+    "client": "cd client && npm run dev",
+    "build:client": "cd client && npm run build",
+    "build:functions": "cd functions && npm run build",
+    "build:firebase": "npm run build:client && npm run build:functions",
+    "deploy:firebase": "npm run build:firebase && firebase deploy",
+    "deploy:firebase:hosting": "npm run build:client && firebase deploy --only hosting",
+    "deploy:firebase:functions": "npm run build:functions && firebase deploy --only functions,firestore,storage"
   },
   "keywords": [],
   "author": "",

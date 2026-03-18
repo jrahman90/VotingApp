@@ -1,20 +1,22 @@
-export function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { firebaseStorage } from "./firebase";
 
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-        return;
-      }
+function sanitizeFileName(fileName: string) {
+  return fileName.replace(/[^a-zA-Z0-9._-]/g, "-");
+}
 
-      reject(new Error("Unable to read image file."));
-    };
+export async function uploadImageFile(
+  file: File,
+  folder: "elections" | "panels" | "candidates"
+) {
+  const storageRef = ref(
+    firebaseStorage,
+    `${folder}/${Date.now()}-${sanitizeFileName(file.name)}`
+  );
 
-    reader.onerror = () => {
-      reject(new Error("Unable to read image file."));
-    };
-
-    reader.readAsDataURL(file);
+  await uploadBytes(storageRef, file, {
+    contentType: file.type || "image/jpeg",
   });
+
+  return getDownloadURL(storageRef);
 }

@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { OnlineDeviceType } from "../../../server";
 import { TRPC_REACT } from "../utils/trpc";
+import type { OnlineDevice } from "../utils/firebaseApi";
 import { DevicesList } from "./DevicesList";
 
 export default function Devices() {
-  const [devices, setDevices] = useState<OnlineDeviceType[]>([]);
+  const [devices, setDevices] = useState<OnlineDevice[]>([]);
 
   TRPC_REACT.device.getConnectedDevices.useSubscription(undefined, {
     onData(data) {
       console.log("🚀 ~ onData ~ data:", data);
-      setDevices(data as unknown as OnlineDeviceType[]);
+      setDevices(data as OnlineDevice[]);
     },
     onError(err) {
       console.log("🚀 ~ onError ~ err:", err);

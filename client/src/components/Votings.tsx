@@ -14,7 +14,7 @@ import { useCreatePanel } from "../hooks/useCreatePanel";
 import { useUpdatePanel } from "../hooks/useUpdatePanel";
 import * as XLSX from "xlsx";
 import { TRPC_REACT } from "../utils/trpc";
-import { readFileAsDataUrl } from "../utils/images";
+import { uploadImageFile } from "../utils/images";
 import { getErrorMessage, useAppAlert } from "../utils/alerts";
 
 const DEFAULT_ELECTION_IMAGE =
@@ -247,7 +247,7 @@ function VotingForm() {
     }
 
     try {
-      const image = await readFileAsDataUrl(file);
+      const image = await uploadImageFile(file, "elections");
       setVotingImage(image);
     } catch (error) {
       showAlert(getErrorMessage(error, "Unable to upload image."));

@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { OnlineDeviceType } from "../../../server";
 import { TRPC_REACT } from "../utils/trpc";
+import type { OnlineDevice } from "../utils/firebaseApi";
 import { useAppAlert } from "../utils/alerts";
 
-function DeviceListItem({ device }: { device: OnlineDeviceType }) {
+function DeviceListItem({ device }: { device: OnlineDevice }) {
   const [voterId, setVoterId] = useState("");
   const isAssigned = !!device.voterId;
   const { showAlert } = useAppAlert();
@@ -61,7 +61,7 @@ function DeviceListItem({ device }: { device: OnlineDeviceType }) {
   );
 }
 
-export function DevicesList({ devices }: { devices: OnlineDeviceType[] }) {
+export function DevicesList({ devices }: { devices: OnlineDevice[] }) {
   return (
     <div>
       {devices?.map((d) => (

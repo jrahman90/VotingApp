@@ -2,7 +2,7 @@ import { ChangeEvent, useState } from "react";
 import { MdCreate, MdClear, MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { useUpdateVoting } from "../hooks/useUpdateVoting";
 import { TRPC_REACT } from "../utils/trpc";
-import { readFileAsDataUrl } from "../utils/images";
+import { uploadImageFile } from "../utils/images";
 import { getErrorMessage, useAppAlert } from "../utils/alerts";
 
 interface VotingRecord {
@@ -97,7 +97,7 @@ const SingleVoting = ({
     }
 
     try {
-      const image = await readFileAsDataUrl(file);
+      const image = await uploadImageFile(file, "elections");
       setImg(image);
     } catch (error) {
       showAlert(getErrorMessage(error, "Unable to upload image."));

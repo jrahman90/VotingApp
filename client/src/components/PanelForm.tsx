@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
-import { readFileAsDataUrl } from "../utils/images";
+import { uploadImageFile } from "../utils/images";
 import { getErrorMessage, useAppAlert } from "../utils/alerts";
 
 export type CandidatePosition = string;
@@ -165,7 +165,7 @@ export function PanelForm({
     }
 
     try {
-      const image = await readFileAsDataUrl(file);
+      const image = await uploadImageFile(file, "panels");
       setPanel((prev) => ({ ...prev, img: image }));
     } catch (error) {
       showAlert(getErrorMessage(error, "Unable to upload image."));
@@ -182,7 +182,7 @@ export function PanelForm({
     }
 
     try {
-      const image = await readFileAsDataUrl(file);
+      const image = await uploadImageFile(file, "candidates");
       setPanel((prev) => ({
         ...prev,
         candidates: prev.candidates.map((item, itemIdx) =>
