@@ -11,8 +11,14 @@ export const queryClient = new QueryClient();
 
 export const TRPC_REACT = createTRPCReact<AppRouter>();
 
+const httpUrl =
+  import.meta.env.VITE_API_URL?.trim() || "http://localhost:3001";
+
+const wsUrl =
+  import.meta.env.VITE_WS_URL?.trim() || "ws://localhost:3002";
+
 const wsClient = createWSClient({
-  url: `ws://localhost:3002`,
+  url: wsUrl,
 });
 
 // Pass AppRouter as generic here. 👇 This lets the `trpc` object know
@@ -27,7 +33,7 @@ export const TRPC_PROXY_CLIENT = createTRPCProxyClient<AppRouter>({
         client: wsClient,
       }),
       false: httpBatchLink({
-        url: "http://localhost:3001",
+        url: httpUrl,
       }),
     }),
   ],
@@ -43,7 +49,7 @@ export const TRPC_CLIENT = TRPC_REACT.createClient({
         client: wsClient,
       }),
       false: httpBatchLink({
-        url: "http://localhost:3001",
+        url: httpUrl,
         // You can pass any HTTP headers you wish here
         async headers() {
           return {
