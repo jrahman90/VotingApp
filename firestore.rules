@@ -6,34 +6,53 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isAdmin() {
+    function isAnonymousDevice() {
       return isSignedIn() &&
-        request.auth.token.admin == true;
+        request.auth.token.firebase.sign_in_provider == "anonymous";
+    }
+
+    function isStaffUser() {
+      return isSignedIn() && !isAnonymousDevice();
     }
 
     match /staff/{staffId} {
-      allow read: if isAdmin();
-      allow write: if false;
+      allow read, write: if isStaffUser() && request.auth.uid == staffId;
     }
 
     match /devices/{deviceId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
+    }
+
+    match /voters/{voterId} {
+      allow read: if isSignedIn();
+      allow write: if isStaffUser();
     }
 
     match /elections/{electionId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isStaffUser();
     }
 
-    match /elections/{electionId}/{document=**} {
+    match /elections/{electionId}/panels/{panelId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isStaffUser();
+    }
+
+    match /elections/{electionId}/roster/{voterId} {
+      allow read: if isSignedIn();
+      allow write: if isStaffUser();
+    }
+
+    match /elections/{electionId}/ballots/{ballotId} {
+      allow read: if isStaffUser();
+      allow create, update: if isSignedIn();
+      allow delete: if isStaffUser();
     }
 
     match /publicResults/{electionId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaffUser();
     }
 
     match /{document=**} {
