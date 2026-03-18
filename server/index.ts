@@ -19,6 +19,7 @@ import { staffRouter } from "./services/staff/staff.router";
 import { deviceRouter } from "./services/device/device.router";
 import { voteRouter } from "./services/vote/vote.router";
 import { OnlineDevice } from "./emitter";
+import { votersRouter } from "./services/voter/voter.router";
 
 const appRouter = router({
   voting: votingRouter,
@@ -27,7 +28,7 @@ const appRouter = router({
   staff: staffRouter,
   device: deviceRouter,
   vote: voteRouter,
-  voter: voteRouter,
+  voter: votersRouter,
 });
 
 // Export type router type signature,

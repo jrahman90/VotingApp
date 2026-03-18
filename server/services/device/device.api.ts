@@ -79,13 +79,25 @@ export const registerDevice = publicProcedure
         },
       });
 
+      const existingOnlineDevice = onlineDevices
+        .getDevices()
+        .find((onlineDevice) => onlineDevice.id === device.id);
+
       eventEmitter.emit(
         EVENTS.REGISTER_DEVICE,
-        onlineDevices.addDevice(device)
+        onlineDevices.addDevice({
+          ...existingOnlineDevice,
+          ...device,
+          voterId: undefined,
+        })
       );
       return device;
     } catch (error) {
       console.log("🚀 ~ registerDevice ~ error:", error);
+
+      if (error instanceof TRPCError) {
+        throw error;
+      }
 
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
@@ -110,13 +122,24 @@ export const unRegisterDevice = publicProcedure
         },
       });
 
+      if (!device) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Device not found.",
+        });
+      }
+
       eventEmitter.emit(
         EVENTS.UNREGISTER_DEVICE,
-        onlineDevices.removeDevice(device?.id as number)
+        onlineDevices.removeDevice(device.id)
       );
       return device;
     } catch (error) {
       console.log("🚀 ~ unregisterDevice ~ error:", error);
+
+      if (error instanceof TRPCError) {
+        throw error;
+      }
 
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
@@ -146,20 +169,145 @@ export const assignVoter = publicProcedure
           voterId: input.voterId,
         },
       });
+      const activeVoting = await prisma.voting.findFirst({
+        where: {
+          isActive: true,
+        },
+      });
+
+      if (!device) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Device not found.",
+        });
+      }
+
+      if (!voter) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Voter not found.",
+        });
+      }
+
+      if (!activeVoting) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "There is no active election.",
+        });
+      }
+
+      const eligibleVoter = await prisma.electionVoter.findUnique({
+        where: {
+          votingId_voterId: {
+            votingId: activeVoting.id,
+            voterId: voter.voterId,
+          },
+        },
+      });
+
+      if (!eligibleVoter) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "This voter is not assigned to the active election.",
+        });
+      }
+
+      const onlineDevice = onlineDevices
+        .getDevices()
+        .find((currentDevice) => currentDevice.id === device.id);
+
+      if (!onlineDevice) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Device is not connected.",
+        });
+      }
+
+      const voterAssignedDevice = onlineDevices
+        .getDevices()
+        .find(
+          (currentDevice) =>
+            currentDevice.voterId === voter.voterId &&
+            currentDevice.id !== device.id
+        );
+
+      if (voterAssignedDevice) {
+        onlineDevices.updateDevice(voterAssignedDevice.id, {
+          ...voterAssignedDevice,
+          voterId: undefined,
+        } as OnlineDevice);
+      }
 
       eventEmitter.emit(
         EVENTS.CHANGE_DEVICE,
-        onlineDevices.updateDevice(
-          device?.id as number,
-          {
-            ...device,
-            voterId: voter?.voterId,
-          } as OnlineDevice
-        )
+        onlineDevices.updateDevice(device.id, {
+          ...onlineDevice,
+          voterId: voter.voterId,
+        } as OnlineDevice)
       );
       return device;
     } catch (error) {
       console.log("🚀 ~ unregisterDevice ~ error:", error);
+
+      if (error instanceof TRPCError) {
+        throw error;
+      }
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "An unexpected error occurred, please try again later.",
+        cause: error,
+      });
+    }
+  });
+
+export const unassignVoter = publicProcedure
+  .input(
+    z.object({
+      name: z.string(),
+    })
+  )
+  .mutation(async ({ input }) => {
+    try {
+      const device = await prisma.device.findFirst({
+        where: {
+          name: input.name,
+        },
+      });
+
+      if (!device) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Device not found.",
+        });
+      }
+
+      const onlineDevice = onlineDevices
+        .getDevices()
+        .find((currentDevice) => currentDevice.id === device.id);
+
+      if (!onlineDevice) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Device is not connected.",
+        });
+      }
+
+      eventEmitter.emit(
+        EVENTS.CHANGE_DEVICE,
+        onlineDevices.updateDevice(device.id, {
+          ...onlineDevice,
+          voterId: undefined,
+        } as OnlineDevice)
+      );
+
+      return device;
+    } catch (error) {
+      console.log("🚀 ~ unassignVoter ~ error:", error);
+
+      if (error instanceof TRPCError) {
+        throw error;
+      }
 
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",

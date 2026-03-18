@@ -4,6 +4,7 @@ import {
   getByVotingId,
   createPanel,
   updatePanel,
+  deletePanel,
 } from "./panel.api";
 
 export const panelRouter = router({
@@ -11,4 +12,5 @@ export const panelRouter = router({
   getByVotingId: getByVotingId,
   createPanel,
   updatePanel,
+  deletePanel,
 });

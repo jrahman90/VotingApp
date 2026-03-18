@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { OnlineDeviceType } from "../../../server";
 import { TRPC_REACT } from "../utils/trpc";
+import { useAppAlert } from "../utils/alerts";
 
 function DeviceListItem({ device }: { device: OnlineDeviceType }) {
   const [voterId, setVoterId] = useState("");
   const isAssigned = !!device.voterId;
+  const { showAlert } = useAppAlert();
 
   const assignMutation = TRPC_REACT.device.assignVoter.useMutation({
     onError(error) {
@@ -19,6 +21,11 @@ function DeviceListItem({ device }: { device: OnlineDeviceType }) {
   });
 
   const onAssignVoter = () => {
+    if (!voterId) {
+      showAlert("Enter a voter id", "warning");
+      return;
+    }
+
     assignMutation.mutate({
       name: device.name,
       voterId: Number(voterId),
@@ -38,6 +45,7 @@ function DeviceListItem({ device }: { device: OnlineDeviceType }) {
             value={voterId}
             onChange={(e) => setVoterId(e.target.value)}
             placeholder="voter id"
+            type="number"
             className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline max-w-50 mx-5"
           />
           <button

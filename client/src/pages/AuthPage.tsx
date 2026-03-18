@@ -7,6 +7,7 @@ import {
   logout,
   registerDevice as registerDeviceAction,
 } from "../store/features/authSlice";
+import { useAppAlert } from "../utils/alerts";
 
 export function AuthPage() {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
+  const { showAlert } = useAppAlert();
 
   const loginMutation = TRPC_REACT.staff.login.useMutation({
     onSuccess(data) {
@@ -23,13 +25,7 @@ export function AuthPage() {
       navigate("/admin");
     },
     onError(error) {
-      alert(
-        JSON.stringify({
-          msg: error.message,
-          code: error.data?.code,
-          status: error.data?.httpStatus,
-        })
-      );
+      showAlert(error.message);
       console.log("🚀 ~ onError ~ error:", error);
     },
   });
@@ -41,13 +37,7 @@ export function AuthPage() {
       navigate("/vote");
     },
     onError(error) {
-      alert(
-        JSON.stringify({
-          msg: error.message,
-          code: error.data?.code,
-          status: error.data?.httpStatus,
-        })
-      );
+      showAlert(error.message);
       console.log("🚀 ~ onError ~ error:", error);
     },
   });

@@ -28,8 +28,19 @@ class OnlineDevices {
   }
 
   addDevice(payload: OnlineDevice) {
-    let devices = [...this.getDevices(), payload];
-    return this.setDevices(devices);
+    const devices = this.getDevices();
+    const existingIdx = devices.findIndex((device) => device.id === payload.id);
+
+    if (existingIdx >= 0) {
+      devices[existingIdx] = {
+        ...devices[existingIdx],
+        ...payload,
+      };
+      return this.setDevices([...devices]);
+    }
+
+    const nextDevices = [...devices, payload];
+    return this.setDevices(nextDevices);
   }
 
   removeDevice(id: number) {
@@ -39,9 +50,13 @@ class OnlineDevices {
 
   updateDevice(id: number, payload: OnlineDevice) {
     const idx = this.getDevices().findIndex((d) => d.id === id);
+    if (idx < 0) {
+      return this.getDevices();
+    }
+
     const devices = this.getDevices();
     devices[idx] = payload;
-    return this.setDevices(devices);
+    return this.setDevices([...devices]);
   }
 }
 

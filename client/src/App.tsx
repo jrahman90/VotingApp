@@ -3,6 +3,8 @@ import { VotingPage } from "./pages/VotingPage";
 import { AuthPage } from "./pages/AuthPage";
 import { AdminPage } from "./pages/AdminPage";
 import { PrivateRoute } from "./components/PrivateRoute";
+import { ElectionVotersPage } from "./pages/ElectionVotersPage";
+import { ElectionResultsPage } from "./pages/ElectionResultsPage";
 
 const router = createBrowserRouter([
   {
@@ -24,6 +26,26 @@ const router = createBrowserRouter([
         <AdminPage />
       </PrivateRoute>
     ),
+  },
+  {
+    path: "/admin/elections/:votingId/voters",
+    element: (
+      <PrivateRoute role="staff">
+        <ElectionVotersPage />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/admin/elections/:votingId/results",
+    element: (
+      <PrivateRoute role="staff">
+        <ElectionResultsPage />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/results/:votingId",
+    element: <ElectionResultsPage />,
   },
 ]);
 

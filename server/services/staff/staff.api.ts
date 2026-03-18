@@ -35,12 +35,19 @@ export const loginStaff = publicProcedure
       });
 
       if (password !== staff.password) {
-        throw new Error("Unauthorized");
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Invalid email or password.",
+        });
       }
 
       return staff;
     } catch (error) {
       console.log("🚀 ~ loginStaff ~ error:", error);
+
+      if (error instanceof TRPCError) {
+        throw error;
+      }
 
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",

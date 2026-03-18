@@ -5,6 +5,7 @@ import {
   unRegisterDevice,
   getConnectedDevices,
   assignVoter,
+  unassignVoter,
 } from "./device.api";
 
 export const deviceRouter = router({
@@ -13,4 +14,5 @@ export const deviceRouter = router({
   register: registerDevice,
   unregister: unRegisterDevice,
   assignVoter,
+  unassignVoter,
 });

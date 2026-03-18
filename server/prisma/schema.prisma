@@ -37,6 +37,7 @@ model Voter {
   permanentAddress   String  @map("permanent_address")
   comments           String?
   Votes              Vote[]
+  Elections          ElectionVoter[]
 
   @@map("voter")
 }
@@ -46,9 +47,12 @@ model Voting {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  name   String  @unique
-  Panels Panel[]
-  Votes  Vote[]
+  name     String  @unique
+  img      String  @default("https://placehold.co/240x240/png?text=Election")
+  isActive Boolean @default(false) @map("is_active")
+  Panels   Panel[]
+  Votes    Vote[]
+  Voters   ElectionVoter[]
 
   @@map("voting")
 }
@@ -61,7 +65,7 @@ model Panel {
   panelName  String @map("panel_name")
   panelColor String @map("panel_color")
   textColor  String @map("text_color")
-  img        String
+  img        String @default("https://placehold.co/120x120/png?text=Panel")
 
   Candidates CandidatesOnPanels[]
   Voting     Voting?              @relation(fields: [votingId], references: [id])
@@ -70,13 +74,29 @@ model Panel {
   @@map("panel")
 }
 
+model ElectionVoter {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  votingId    Int    @map("voting_id")
+  voterId     Int    @map("voter_id")
+  extraFields Json?  @map("extra_fields")
+  Voting      Voting @relation(fields: [votingId], references: [id])
+  Voter       Voter  @relation(fields: [voterId], references: [voterId])
+
+  @@unique([votingId, voterId])
+  @@map("election_voter")
+}
+
 model Candidate {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  name     String   @unique
-  position Position
+  name     String
+  img      String   @default("https://placehold.co/120x120/png?text=Candidate")
+  position String
 
   Panel CandidatesOnPanels[]
   Votes Vote[]
@@ -125,10 +145,4 @@ model Vote {
   Voting    Voting    @relation(fields: [votingId], references: [id])
 
   @@map("vote")
-}
-
-enum Position {
-  President
-  VicePresident
-  Secretary
 }

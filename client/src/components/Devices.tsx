@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { OnlineDeviceType } from "../../../server";
 import { TRPC_REACT } from "../utils/trpc";
 import { DevicesList } from "./DevicesList";
