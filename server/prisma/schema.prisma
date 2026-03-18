@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Staff {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  email    String @unique
+  password String
+
+  @@map("staff")
+}
+
+model Voter {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  voterId            Int     @unique @map("voter_id")
+  firstAndMiddleName String  @map("first_and_middle_name")
+  lastName           String  @map("last_name")
+  streetAddress      String  @map("street_address")
+  city               String
+  state              String
+  phone              String
+  yob                Int
+  permanentAddress   String  @map("permanent_address")
+  comments           String?
+  Votes              Vote[]
+  Elections          ElectionVoter[]
+
+  @@map("voter")
+}
+
+model Voting {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  name     String  @unique
+  img      String  @default("https://placehold.co/240x240/png?text=Election")
+  isActive Boolean @default(false) @map("is_active")
+  Panels   Panel[]
+  Votes    Vote[]
+  Voters   ElectionVoter[]
+
+  @@map("voting")
+}
+
+model Panel {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  panelName  String @map("panel_name")
+  panelColor String @map("panel_color")
+  textColor  String @map("text_color")
+  img        String @default("https://placehold.co/120x120/png?text=Panel")
+
+  Candidates CandidatesOnPanels[]
+  Voting     Voting?              @relation(fields: [votingId], references: [id])
+  votingId   Int?                 @map("voting_id")
+
+  @@map("panel")
+}
+
+model ElectionVoter {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  votingId    Int    @map("voting_id")
+  voterId     Int    @map("voter_id")
+  extraFields Json?  @map("extra_fields")
+  Voting      Voting @relation(fields: [votingId], references: [id])
+  Voter       Voter  @relation(fields: [voterId], references: [voterId])
+
+  @@unique([votingId, voterId])
+  @@map("election_voter")
+}
+
+model Candidate {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  name     String
+  img      String   @default("https://placehold.co/120x120/png?text=Candidate")
+  position String
+
+  Panel CandidatesOnPanels[]
+  Votes Vote[]
+
+  @@map("candidate")
+}
+
+model CandidatesOnPanels {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  Panel       Panel     @relation(fields: [panelId], references: [id])
+  panelId     Int       @map("panel_id")
+  Candidate   Candidate @relation(fields: [candidateId], references: [id])
+  candidateId Int       @map("candidate_id")
+
+  @@map("candidates_on_panels")
+}
+
+model Device {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  name String @unique
+
+  Votes Vote[]
+
+  @@map("device")
+}
+
+model Vote {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  candidateId Int
+  votingId    Int
+  voterId     Int
+  deviceId    Int
+
+  Device    Device    @relation(fields: [deviceId], references: [id])
+  Candidate Candidate @relation(fields: [candidateId], references: [id])
+  Voter     Voter     @relation(fields: [voterId], references: [voterId])
+  Voting    Voting    @relation(fields: [votingId], references: [id])
+
+  @@map("vote")
+}

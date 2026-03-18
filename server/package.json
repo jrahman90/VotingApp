@@ -1,0 +1,24 @@
+{
+  "name": "voting-app-server",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@prisma/client": "^5.7.1",
+    "@trpc/client": "^10.45.0",
+    "@trpc/server": "^10.45.0",
+    "cors": "^2.8.5",
+    "ws": "^8.16.0",
+    "zod": "^3.22.4"
+  },
+  "scripts": {
+    "dev": "npx prisma migrate dev && ts-node index.ts"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/node": "^20.10.7",
+    "@types/ws": "^8.5.10",
+    "prisma": "^5.7.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
