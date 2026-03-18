@@ -21,6 +21,12 @@ import { voteRouter } from "./services/vote/vote.router";
 import { OnlineDevice } from "./emitter";
 import { votersRouter } from "./services/voter/voter.router";
 
+const port = Number(process.env.PORT || 3001);
+const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const appRouter = router({
   voting: votingRouter,
   candidate: candidateRouter,
@@ -65,27 +71,31 @@ export type DeviceType = Device & {
 };
 export type OnlineDeviceType = OnlineDevice;
 
-const wss = new ws.Server({
-  port: 3002,
-});
-const handler = applyWSSHandler({ wss, router: appRouter });
-
-wss.on("connection", (ws) => {
-  console.log(`Connection (${wss.clients.size})`);
-  ws.once("close", () => {
-    console.log(` Connection (${wss.clients.size})`);
-  });
-});
-console.log("✅ WebSocket Server listening on ws://localhost:3002");
-process.on("SIGTERM", () => {
-  console.log("SIGTERM");
-  handler.broadcastReconnectNotification();
-  wss.close();
-});
-
 const server = createHTTPServer({
-  middleware: cors(),
+  middleware: cors({
+    origin: allowedOrigins,
+  }),
   router: appRouter,
 });
 
-server.listen(3001);
+const wss = new ws.Server({ server: server.server });
+const handler = applyWSSHandler({ wss, router: appRouter });
+
+wss.on("connection", (socket) => {
+  console.log(`WebSocket connection (${wss.clients.size})`);
+  socket.once("close", () => {
+    console.log(`WebSocket disconnect (${wss.clients.size})`);
+  });
+});
+
+server.listen(port, "0.0.0.0");
+console.log(`✅ HTTP and WebSocket server listening on port ${port}`);
+console.log(`Allowed origins: ${allowedOrigins.join(", ")}`);
+
+process.on("SIGTERM", () => {
+  console.log("SIGTERM");
+  handler.broadcastReconnectNotification();
+  wss.close(() => {
+    server.server.close();
+  });
+});
