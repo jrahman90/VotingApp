@@ -1,5 +1,7 @@
 # Voting app
 
+Create an easy and cost-effective voting app that can be used for in-person elections.
+
 ## Test instructions
 
 Test staff users
