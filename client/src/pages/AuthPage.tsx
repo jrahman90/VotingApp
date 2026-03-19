@@ -16,6 +16,9 @@ export function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [installPrompt, setInstallPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const { showAlert } = useAppAlert();
 
@@ -65,10 +68,67 @@ export function AuthPage() {
     dispatch(logout());
   }, []);
 
+  useEffect(() => {
+    const displayModeStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+    setIsAppInstalled(displayModeStandalone);
+
+    const onBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+
+    const onAppInstalled = () => {
+      setIsAppInstalled(true);
+      setInstallPrompt(null);
+      showAlert("Voting App installed successfully.", "success");
+    };
+
+    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    window.addEventListener("appinstalled", onAppInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", onAppInstalled);
+    };
+  }, [showAlert]);
+
+  const onInstallApp = async () => {
+    if (!installPrompt) {
+      showAlert(
+        "Install is not available yet in this browser. Open the browser menu and look for Add to Home Screen or Install App.",
+        "warning"
+      );
+      return;
+    }
+
+    await installPrompt.prompt();
+    await installPrompt.userChoice;
+    setInstallPrompt(null);
+  };
+
   return (
     <div className="bg-white py-12 sm:py-14">
       <div className="mx-auto max-w-7xl px-6 lg:px-8 flex justify-center">
         <div className="w-full max-w-xs">
+          {!isAppInstalled && (
+            <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-center shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                Install App
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                Install Voting App on this device for a fullscreen, kiosk-style experience.
+              </p>
+              <button
+                type="button"
+                onClick={onInstallApp}
+                className="mt-3 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+              >
+                Install Voting App
+              </button>
+            </div>
+          )}
           {/* REGISTER DEVICE */}
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl text-center mb-5 mt-16">
             Voting device

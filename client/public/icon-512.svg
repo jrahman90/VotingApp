@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Voting App">
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <rect x="74" y="96" width="364" height="320" rx="56" fill="#1d4ed8"/>
+  <rect x="118" y="154" width="276" height="38" rx="19" fill="#dbeafe"/>
+  <rect x="118" y="224" width="276" height="38" rx="19" fill="#93c5fd"/>
+  <rect x="118" y="294" width="170" height="38" rx="19" fill="#bfdbfe"/>
+  <circle cx="372" cy="314" r="52" fill="#16a34a"/>
+  <path d="M346 314l18 18 36-43" fill="none" stroke="#f8fafc" stroke-linecap="round" stroke-linejoin="round" stroke-width="20"/>
+</svg>
