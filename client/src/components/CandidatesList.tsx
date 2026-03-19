@@ -47,16 +47,20 @@ export function CandidatesList({
 
   const compact = panelCount >= 4;
   const ultraCompact = panelCount >= 5;
+  const gridColumnsClass =
+    panelCount <= 1
+      ? "grid-cols-1"
+      : panelCount === 2
+        ? "grid-cols-1 md:grid-cols-2"
+        : panelCount === 3
+          ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
+          : panelCount === 4
+            ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-4"
+            : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5";
 
   return (
     <div
-      className={`mx-auto grid h-full w-full gap-3 ${
-        panelCount <= 2 ? "grid-cols-1 md:grid-cols-2" : ""
-      }`}
-      style={{
-        gridTemplateColumns:
-          panelCount >= 3 ? `repeat(${panelCount}, minmax(0, 1fr))` : undefined,
-      }}
+      className={`mx-auto grid h-full w-full auto-rows-fr gap-3 ${gridColumnsClass}`}
     >
       {panels.map((panel) => {
         const panelCandidates = panel.Candidates.map((candidateLink) => {

@@ -187,7 +187,7 @@ export function VotingPage() {
 
   return (
     <div
-      className="h-screen overflow-hidden bg-cover bg-center bg-no-repeat"
+      className="min-h-screen overflow-y-auto bg-cover bg-center bg-no-repeat lg:h-screen lg:overflow-hidden"
       style={{
         backgroundImage: votingData?.img
           ? `linear-gradient(rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.82)), url("${votingData.img}")`
@@ -229,11 +229,11 @@ export function VotingPage() {
       )}
       {!isError && !isLoading && (!currentDevice || isApproved) && (
         <div
-          className={`mx-auto flex h-full max-w-[1600px] flex-col ${
+          className={`mx-auto flex min-h-screen max-w-[1600px] flex-col ${
             ultraCompactLayout
               ? "px-2 py-2 md:px-3 md:py-3"
               : "px-3 py-3 md:px-4 md:py-4"
-          }`}
+          } lg:h-full`}
         >
           {!data && (
             <div className="mx-auto my-auto max-w-2xl rounded-3xl bg-white/90 p-8 shadow-2xl backdrop-blur">
@@ -243,7 +243,9 @@ export function VotingPage() {
             </div>
           )}
           {data && (
-            <div className={`flex h-full flex-col ${ultraCompactLayout ? "gap-2" : "gap-3"}`}>
+            <div
+              className={`flex flex-1 flex-col ${ultraCompactLayout ? "gap-2" : "gap-3"} lg:min-h-0`}
+            >
               <div
                 className={`rounded-[2rem] bg-white/88 shadow-2xl backdrop-blur ${
                   ultraCompactLayout ? "p-3 md:p-3.5" : compactLayout ? "p-3.5 md:p-4" : "p-4 md:p-5"
@@ -270,7 +272,9 @@ export function VotingPage() {
 
                 <div
                   className={`grid gap-3 ${
-                    ultraCompactLayout ? "mt-3 xl:grid-cols-[0.8fr_2fr]" : "mt-4 xl:grid-cols-[0.8fr_2fr]"
+                    ultraCompactLayout
+                      ? "mt-3 md:grid-cols-2 xl:grid-cols-[0.8fr_2fr]"
+                      : "mt-4 md:grid-cols-2 xl:grid-cols-[0.8fr_2fr]"
                   }`}
                 >
                   <div
@@ -339,9 +343,9 @@ export function VotingPage() {
               {isEnabled && (
                 <React.Fragment>
                   <div
-                    className={`min-h-0 flex-1 rounded-[2rem] bg-white/82 shadow-2xl backdrop-blur ${
+                    className={`flex-1 rounded-[2rem] bg-white/82 shadow-2xl backdrop-blur ${
                       ultraCompactLayout ? "p-2.5 md:p-3" : compactLayout ? "p-3 md:p-3.5" : "p-3 md:p-4"
-                    }`}
+                    } overflow-y-auto lg:min-h-0`}
                   >
                     <CandidatesList
                       panels={votingData?.Panels || []}
@@ -350,17 +354,17 @@ export function VotingPage() {
                       panelCount={panelCount}
                     />
                   </div>
-                  <div className="flex justify-center">
+                  <div className="flex justify-center pb-1">
                     <div
-                      className={`flex items-center rounded-[1.75rem] bg-slate-950/90 shadow-2xl backdrop-blur ${
+                      className={`flex w-full max-w-[540px] flex-col items-stretch rounded-[1.75rem] bg-slate-950/90 shadow-2xl backdrop-blur sm:flex-row ${
                         ultraCompactLayout ? "gap-2 px-4 py-3" : "gap-3 px-5 py-4"
                       }`}
                     >
                       <button
                         className={`rounded-xl bg-slate-200 font-bold text-black hover:bg-slate-300 ${
                           ultraCompactLayout
-                            ? "min-w-[140px] px-4 py-2.5 text-base"
-                            : "min-w-[160px] px-5 py-3 text-lg"
+                            ? "w-full px-4 py-2.5 text-base sm:min-w-[140px]"
+                            : "w-full px-5 py-3 text-lg sm:min-w-[160px]"
                         }`}
                         onClick={onClear}
                       >
@@ -369,8 +373,8 @@ export function VotingPage() {
                       <button
                         className={`rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-700 ${
                           ultraCompactLayout
-                            ? "min-w-[180px] px-5 py-2.5 text-base"
-                            : "min-w-[220px] px-6 py-3 text-lg"
+                            ? "w-full px-5 py-2.5 text-base sm:min-w-[180px]"
+                            : "w-full px-6 py-3 text-lg sm:min-w-[220px]"
                         }`}
                         onClick={onVote}
                       >
