@@ -133,16 +133,17 @@ export function CandidatesList({
               )}
             </div>
             <div
-              className={`mt-3 flex w-full flex-1 flex-col justify-start ${
+              className={`mt-3 flex w-full flex-1 flex-col justify-start overflow-y-auto pr-1 ${
                 microCompact ? "gap-1" : ultraCompact ? "gap-1.5" : compact ? "gap-2.5" : "gap-3"
               }`}
+              style={{ scrollbarGutter: "stable" }}
             >
               {positionOrder.map((position) => {
-                const candidate = panelCandidates.find(
+                const candidatesForPosition = panelCandidates.filter(
                   (panelCandidate) => panelCandidate.position === position
                 );
 
-                if (!candidate) {
+                if (candidatesForPosition.length === 0) {
                   return (
                     <div
                       key={`${panel.id}-${position}-empty`}
@@ -174,79 +175,90 @@ export function CandidatesList({
                   );
                 }
 
-                const onSelect = () => {
-                  setSelection(candidate.id, candidate.position);
-                };
-                const isSelected = selection[candidate.position] === candidate.id;
-
                 return (
                   <div
-                    key={candidate.id}
-                    className={`relative flex w-full cursor-pointer items-center rounded-2xl transition-colors ${
-                      microCompact
-                        ? "min-h-[42px] gap-x-1.5 px-1.5 py-1"
-                        : ultraCompact
-                          ? "min-h-[48px] gap-x-2 px-2 py-1.5"
-                          : compact
-                            ? "min-h-[60px] gap-x-2.5 px-2.5 py-2"
-                            : "min-h-[76px] gap-x-3 px-4 py-3"
-                    } ${
-                      isSelected ? "ring-2 ring-white bg-white/25" : "bg-white/10"
+                    key={`${panel.id}-${position}`}
+                    className={`flex w-full flex-col ${
+                      microCompact ? "gap-1" : ultraCompact ? "gap-1.5" : compact ? "gap-2" : "gap-2.5"
                     }`}
-                    onClick={onSelect}
                   >
-                    <img
-                      src={candidate.img}
-                      alt={candidate.name}
-                      className={`rounded-full object-cover bg-white/30 ${
-                        microCompact
-                          ? "h-12 w-12"
-                          : ultraCompact
-                            ? "h-14 w-14"
-                            : compact
-                              ? "h-16 w-16"
-                              : "h-20 w-20"
-                      }`}
-                    />
-                    <div
-                      className={`${
-                        microCompact
-                          ? "text-[1.1rem] leading-5"
-                        : ultraCompact
-                            ? "text-[1.22rem] leading-5"
-                            : compact
-                              ? "text-[1.35rem] leading-6"
-                              : "text-[1.48rem] leading-6"
-                      }`}
-                    >
-                      <p
-                        className={`font-semibold ${
-                          microCompact
-                            ? "text-[1.18rem]"
-                          : ultraCompact
-                              ? "text-[1.3rem]"
-                              : compact
-                                ? "text-[1.45rem]"
-                                : "text-[1.62rem]"
-                        }`}
-                      >
-                        <span className="absolute inset-0" />
-                        {candidate.name}
-                      </p>
-                      <p
-                        className={`mt-0.5 font-medium uppercase tracking-[0.08em] opacity-90 ${
-                          microCompact
-                            ? "text-[0.9rem]"
-                          : ultraCompact
-                              ? "text-[1rem]"
-                              : compact
-                                ? "text-[1.08rem]"
-                                : "text-[1.18rem]"
-                        }`}
-                      >
-                        {candidate.position}
-                      </p>
-                    </div>
+                    {candidatesForPosition.map((candidate) => {
+                      const onSelect = () => {
+                        setSelection(candidate.id, candidate.position);
+                      };
+                      const isSelected = selection[candidate.position] === candidate.id;
+
+                      return (
+                        <div
+                          key={candidate.id}
+                          className={`relative flex w-full cursor-pointer items-center rounded-2xl transition-colors ${
+                            microCompact
+                              ? "min-h-[42px] gap-x-1.5 px-1.5 py-1"
+                              : ultraCompact
+                                ? "min-h-[48px] gap-x-2 px-2 py-1.5"
+                                : compact
+                                  ? "min-h-[60px] gap-x-2.5 px-2.5 py-2"
+                                  : "min-h-[76px] gap-x-3 px-4 py-3"
+                          } ${
+                            isSelected ? "ring-2 ring-white bg-white/25" : "bg-white/10"
+                          }`}
+                          onClick={onSelect}
+                        >
+                          <img
+                            src={candidate.img}
+                            alt={candidate.name}
+                            className={`rounded-full object-cover bg-white/30 ${
+                              microCompact
+                                ? "h-12 w-12"
+                                : ultraCompact
+                                  ? "h-14 w-14"
+                                  : compact
+                                    ? "h-16 w-16"
+                                    : "h-20 w-20"
+                            }`}
+                          />
+                          <div
+                            className={`${
+                              microCompact
+                                ? "text-[1.1rem] leading-5"
+                                : ultraCompact
+                                  ? "text-[1.22rem] leading-5"
+                                  : compact
+                                    ? "text-[1.35rem] leading-6"
+                                    : "text-[1.48rem] leading-6"
+                            }`}
+                          >
+                            <p
+                              className={`font-semibold ${
+                                microCompact
+                                  ? "text-[1.18rem]"
+                                : ultraCompact
+                                    ? "text-[1.3rem]"
+                                    : compact
+                                      ? "text-[1.45rem]"
+                                      : "text-[1.62rem]"
+                              }`}
+                            >
+                              <span className="absolute inset-0" />
+                              {candidate.name}
+                            </p>
+                            <p
+                              className={`mt-0.5 font-medium uppercase tracking-[0.08em] opacity-90 ${
+                                microCompact
+                                  ? "text-[0.9rem]"
+                                : ultraCompact
+                                    ? "text-[1rem]"
+                                    : compact
+                                      ? "text-[1.08rem]"
+                                      : "text-[1.18rem]"
+                              }`}
+                            >
+                              {candidate.position}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })}
