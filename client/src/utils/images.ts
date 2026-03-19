@@ -41,7 +41,11 @@ export async function deleteUploadedImage(url?: string | null) {
     await deleteObject(ref(firebaseStorage, url));
   } catch (error) {
     const storageError = error as { code?: string } | undefined;
-    if (storageError?.code === "storage/object-not-found") {
+    if (
+      storageError?.code === "storage/object-not-found" ||
+      storageError?.code === "storage/unauthorized" ||
+      storageError?.code === "storage/unauthenticated"
+    ) {
       return;
     }
 

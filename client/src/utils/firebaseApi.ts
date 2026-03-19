@@ -928,17 +928,72 @@ export async function updatePanelRecord(input: {
   return panel;
 }
 
-export async function deletePanelRecord(input: { panelId: number }) {
-  const snapshot = await getDocs(
-    query(collectionGroup(firestore, "panels"), where("id", "==", input.panelId), limit(1))
-  );
+export async function reorderElectionCandidates(input: {
+  votingId: number;
+  fromIndex: number;
+  toIndex: number;
+}) {
+  if (input.fromIndex === input.toIndex) {
+    return true;
+  }
 
-  if (snapshot.empty) {
+  const panels = await readElectionPanels(input.votingId);
+  const batch = writeBatch(firestore);
+  const timestamp = nowIso();
+
+  panels.forEach((panel) => {
+    if (
+      input.fromIndex < 0 ||
+      input.toIndex < 0 ||
+      input.fromIndex >= panel.Candidates.length ||
+      input.toIndex >= panel.Candidates.length
+    ) {
+      return;
+    }
+
+    const nextCandidates = [...panel.Candidates];
+    const [movedCandidate] = nextCandidates.splice(input.fromIndex, 1);
+    nextCandidates.splice(input.toIndex, 0, movedCandidate);
+
+    const ref = doc(electionPanelsCollection(input.votingId), String(panel.id));
+    batch.update(ref, {
+      Candidates: nextCandidates,
+      updatedAt: timestamp,
+    });
+  });
+
+  await batch.commit();
+  return true;
+}
+
+export async function deletePanelRecord(input: { panelId: number; votingId?: number }) {
+  let panelRef;
+  let panel: PanelRecord | null = null;
+
+  if (input.votingId != null) {
+    panelRef = doc(electionPanelsCollection(input.votingId), String(input.panelId));
+    const panelSnapshot = await getDoc(panelRef);
+    if (!panelSnapshot.exists()) {
+      throw new Error("Panel not found.");
+    }
+    panel = panelSnapshot.data() as PanelRecord;
+  } else {
+    const snapshot = await getDocs(
+      query(collectionGroup(firestore, "panels"), where("id", "==", input.panelId), limit(1))
+    );
+
+    if (snapshot.empty) {
+      throw new Error("Panel not found.");
+    }
+
+    panelRef = snapshot.docs[0].ref;
+    panel = castDoc<PanelRecord>(snapshot.docs[0]);
+  }
+
+  if (!panel) {
     throw new Error("Panel not found.");
   }
 
-  const panelDoc = snapshot.docs[0];
-  const panel = castDoc<PanelRecord>(panelDoc);
   const candidateIds = panel.Candidates.map((link) => link.candidateId);
   const ballots = await readElectionBallots(panel.votingId as number);
 
@@ -969,7 +1024,7 @@ export async function deletePanelRecord(input: { panelId: number }) {
     })
   );
 
-  await deleteDoc(panelDoc.ref);
+  await deleteDoc(panelRef);
   await deleteUploadedImages([
     panel.img,
     ...panel.Candidates.map((link) => link.Candidate.img),

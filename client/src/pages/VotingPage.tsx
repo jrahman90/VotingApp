@@ -53,6 +53,13 @@ interface AssignedVoterDetails {
   comments?: string | null;
 }
 
+interface OfficeSlot {
+  key: string;
+  label: string;
+  position: string;
+  index: number;
+}
+
 export function VotingPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -156,25 +163,42 @@ export function VotingPage() {
     viewportSize.height <= 1024 ||
     compactLayout;
 
-  const positionOrder = Array.from(
-    new Set(
-      (votingData?.Panels || []).flatMap((panel) =>
-        panel.Candidates.map((candidateLink) => candidateLink.Candidate.position)
-      )
-    )
-  ).sort((left, right) => left.localeCompare(right));
+  const slotCount = Math.max(
+    0,
+    ...(votingData?.Panels || []).map((panel) => panel.Candidates.length)
+  );
 
-  const selectedCandidates = positionOrder.map((position) => {
-    const candidate = votingData?.Panels.flatMap((panel) =>
-      panel.Candidates.map((candidateLink) => ({
-        ...candidateLink.Candidate,
-        panelName: panel.panelName,
-      }))
-    ).find((candidate) => candidate.id === selection[position]);
+  const officeSlots: OfficeSlot[] = Array.from({ length: slotCount }, (_, index) => {
+    const slotCandidate = (votingData?.Panels || [])
+      .map((panel) => panel.Candidates[index]?.Candidate)
+      .find(Boolean);
+    const baseLabel = slotCandidate?.position || `Office ${index + 1}`;
 
     return {
-      position,
-      label: position,
+      key: `slot-${index}`,
+      label: baseLabel,
+      position: baseLabel,
+      index,
+    };
+  });
+
+  const selectedCandidates = officeSlots.map((officeSlot) => {
+    const candidate = votingData?.Panels.flatMap((panel) =>
+      panel.Candidates.map((candidateLink, candidateIndex) => ({
+        ...candidateLink.Candidate,
+        panelName: panel.panelName,
+        slotIndex: candidateIndex,
+      }))
+    ).find(
+      (candidate) =>
+        candidate.slotIndex === officeSlot.index &&
+        candidate.id === selection[officeSlot.key]
+    );
+
+    return {
+      position: officeSlot.position,
+      label: officeSlot.label,
+      officeKey: officeSlot.key,
       candidate,
     };
   });
@@ -202,11 +226,11 @@ export function VotingPage() {
       deviceId: device.id,
       voterId,
       votingId: votingData.id,
-      selections: positionOrder
-        .filter((position) => !!selection[position])
-        .map((position) => ({
-          position,
-          candidateId: selection[position],
+      selections: officeSlots
+        .filter((officeSlot) => !!selection[officeSlot.key])
+        .map((officeSlot) => ({
+          position: officeSlot.position,
+          candidateId: selection[officeSlot.key],
         })),
     });
   };
@@ -214,8 +238,8 @@ export function VotingPage() {
     setSelection({});
     setShowConfirmModal(false);
   };
-  const onSelection = (id: number, position: string) => {
-    setSelection({ ...selection, [position]: id });
+  const onSelection = (id: number, officeKey: string) => {
+    setSelection({ ...selection, [officeKey]: id });
   };
 
   return (
@@ -437,13 +461,14 @@ export function VotingPage() {
                           : compactLayout
                             ? "p-2.5"
                             : "p-3.5 md:p-4"
-                    } overflow-hidden lg:min-h-0`}
+                    } overflow-y-auto overflow-x-hidden lg:min-h-0`}
                   >
                     <CandidatesList
                       panels={votingData?.Panels || []}
                       selection={selection}
                       setSelection={onSelection}
                       panelCount={panelCount}
+                      officeSlots={officeSlots}
                       compactLayout={compactLayout}
                       ultraCompactLayout={ultraCompactLayout}
                       microCompactLayout={microCompactLayout}

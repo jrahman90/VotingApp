@@ -59,6 +59,7 @@ interface PanelFormProps {
   data?: PanelFormType;
   votingId?: number;
   onSubmit: (payload: PanelFormType) => void;
+  onReorderCandidate?: (fromIndex: number, toIndex: number) => void;
 }
 
 export function PanelForm({
@@ -66,6 +67,7 @@ export function PanelForm({
   data,
   votingId,
   onSubmit,
+  onReorderCandidate,
 }: PanelFormProps) {
   const { showAlert } = useAppAlert();
   const [panel, setPanel] = useState(
@@ -156,6 +158,31 @@ export function PanelForm({
       ...prev,
       candidates: prev.candidates.filter((_, itemIdx) => itemIdx !== idx),
     }));
+  };
+
+  const onMoveCandidate = (idx: number, direction: "up" | "down") => {
+    setPanel((prev) => {
+      const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= prev.candidates.length) {
+        return prev;
+      }
+
+      const candidates = [...prev.candidates];
+      [candidates[idx], candidates[targetIdx]] = [
+        candidates[targetIdx],
+        candidates[idx],
+      ];
+
+      return {
+        ...prev,
+        candidates,
+      };
+    });
+
+    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (targetIdx >= 0 && targetIdx < panel.candidates.length) {
+      onReorderCandidate?.(idx, targetIdx);
+    }
   };
 
   const onPanelImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -254,18 +281,36 @@ export function PanelForm({
       </div>
       <div className="w-full">
         {panel.candidates.map((candidate, idx) => (
-          <div key={`${candidate.position}-${idx}`} className="mb-4 rounded bg-white/40 p-4">
+          <div key={candidate.id ?? idx} className="mb-4 rounded bg-white/40 p-4">
             <div className="mb-2 flex items-center justify-between">
               <label className="block font-semibold text-slate-900">
-                Candidate
+                Candidate {idx + 1}
               </label>
-              <button
-                type="button"
-                className="rounded bg-red-100 px-3 py-1 text-sm text-red-700"
-                onClick={() => onRemoveCandidate(idx)}
-              >
-                Remove
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="rounded bg-slate-200 px-3 py-1 text-sm text-slate-700 disabled:opacity-40"
+                  onClick={() => onMoveCandidate(idx, "up")}
+                  disabled={idx === 0}
+                >
+                  Up
+                </button>
+                <button
+                  type="button"
+                  className="rounded bg-slate-200 px-3 py-1 text-sm text-slate-700 disabled:opacity-40"
+                  onClick={() => onMoveCandidate(idx, "down")}
+                  disabled={idx === panel.candidates.length - 1}
+                >
+                  Down
+                </button>
+                <button
+                  type="button"
+                  className="rounded bg-red-100 px-3 py-1 text-sm text-red-700"
+                  onClick={() => onRemoveCandidate(idx)}
+                >
+                  Remove
+                </button>
+              </div>
             </div>
             <Dropdown className="mb-3 w-full">
               <Dropdown.Toggle

@@ -32,6 +32,7 @@ import {
   subscribeToConnectedDevices,
   unassignDevice,
   unregisterDeviceWithFirebase,
+  reorderElectionCandidates,
   updateStaffAccess,
   updatePanelRecord,
   updateVotingRecord,
@@ -385,6 +386,14 @@ export const TRPC_REACT = {
       useMutation(options?: Parameters<typeof useMutation>[0]) {
         return useMutation({
           mutationFn: updatePanelRecord,
+          ...(options || {}),
+        });
+      },
+    },
+    reorderCandidates: {
+      useMutation(options?: Parameters<typeof useMutation>[0]) {
+        return useMutation({
+          mutationFn: reorderElectionCandidates,
           ...(options || {}),
         });
       },

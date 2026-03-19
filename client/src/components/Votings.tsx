@@ -363,6 +363,15 @@ export default function Votings({
       showAlert(error.message);
     },
   });
+  const reorderCandidates = TRPC_REACT.panel.reorderCandidates.useMutation({
+    onSuccess() {
+      utils.voting.getAll.invalidate();
+      utils.voting.getOneDetailed.invalidate();
+    },
+    onError(error) {
+      showAlert(error.message);
+    },
+  });
   const importVoters = TRPC_REACT.voter.importMany.useMutation({
     onError(error) {
       showAlert(error.message);
@@ -482,7 +491,11 @@ export default function Votings({
       {
         label: "Delete panel",
         variant: "danger",
-        onClick: () => deletePanel.mutate({ panelId }),
+        onClick: () =>
+          deletePanel.mutate({
+            panelId,
+            votingId: selectedElection.id,
+          }),
       },
     ]);
   };
@@ -944,6 +957,13 @@ export default function Votings({
                                     })
                                   ),
                                 }}
+                                onReorderCandidate={(fromIndex, toIndex) =>
+                                  reorderCandidates.mutate({
+                                    votingId: selectedElection.id,
+                                    fromIndex,
+                                    toIndex,
+                                  })
+                                }
                                 onSubmit={(payload) =>
                                   onUpdatePanel(payload, panel.id)
                                 }
