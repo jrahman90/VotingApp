@@ -70,6 +70,7 @@ export function VotingPage() {
     },
     onError(err) {
       console.log("🚀 ~ onError ~ err:", err);
+      setHasLoadedDevices(true);
     },
   });
 
@@ -90,8 +91,9 @@ export function VotingPage() {
 
   const currentDevice = devices.find((entry) => entry.name === device?.name);
   const isApproved = currentDevice?.approved !== false;
+  const shouldFetchVoting = !!currentDevice?.approved;
   const { data, isError, isLoading } = TRPC_REACT.voting.getOneDetailed.useQuery({
-    enabled: !!currentDevice?.approved,
+    enabled: shouldFetchVoting,
   });
   const votingData = data as VotingDetailed | undefined;
   const voterId = currentDevice?.voterId;
@@ -117,6 +119,7 @@ export function VotingPage() {
 
   const [selection, setSelection] = useState<Record<string, number>>({});
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const showPageLoading = !hasLoadedDevices || (shouldFetchVoting && isLoading);
 
   const isEnabled = !!voterId;
   const panelCount = votingData?.Panels.length || 0;
@@ -195,12 +198,12 @@ export function VotingPage() {
         backgroundColor: "#0f172a",
       }}
     >
-      {isLoading && (
+      {showPageLoading && (
         <p className="flex h-full items-center justify-center px-6 text-center text-sm leading-6 text-slate-200">
           loading...
         </p>
       )}
-      {!isLoading && hasLoadedDevices && currentDevice && !isApproved && (
+      {!showPageLoading && hasLoadedDevices && currentDevice && !isApproved && (
         <div className="flex h-full items-center justify-center px-6">
           <div className="w-full max-w-2xl rounded-[2rem] bg-white/92 p-10 text-center shadow-2xl backdrop-blur">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-600">
@@ -227,7 +230,7 @@ export function VotingPage() {
           error while fetching the data
         </p>
       )}
-      {!isError && !isLoading && (!currentDevice || isApproved) && (
+      {!isError && !showPageLoading && (!currentDevice || isApproved) && (
         <div
           className={`mx-auto flex min-h-screen max-w-[1600px] flex-col ${
             ultraCompactLayout
