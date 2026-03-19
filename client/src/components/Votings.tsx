@@ -671,80 +671,127 @@ export default function Votings({
                 selected={selected as number}
               />
               {selectedElection && (
-                <div className="mt-8 rounded bg-slate-100 p-6">
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    Configure {selectedElection.name}
-                  </h3>
-                  <img
-                    src={selectedElection.img || DEFAULT_ELECTION_IMAGE}
-                    alt={selectedElection.name}
-                    className="mt-4 h-24 w-24 rounded-2xl object-cover"
-                  />
-                  <p className="mt-2 text-sm text-gray-600">
-                    Create ballot panels, candidates, and the voter list directly
-                    inside this election.
-                  </p>
-                  <div className="mt-4">
-                    <div className="flex flex-wrap gap-3">
-                      <button
-                        type="button"
-                        className="inline-flex rounded bg-emerald-600 px-4 py-2 font-semibold text-white"
-                        onClick={() => setShowAddPanelModal(true)}
-                      >
-                        Add panel
-                      </button>
-                      <button
-                        type="button"
-                        className="inline-flex rounded bg-amber-500 px-4 py-2 font-semibold text-slate-950"
-                        onClick={() => setShowImportVotersModal(true)}
-                      >
-                        Import voter list
-                      </button>
-                      <Link
-                        to={`/admin/elections/${selectedElection.id}/voters`}
-                        className="inline-flex rounded bg-slate-900 px-4 py-2 font-semibold text-white"
-                      >
-                        Open voter roster
-                      </Link>
-                      <Link
-                        to={`/admin/elections/${selectedElection.id}/results`}
-                        className="inline-flex rounded bg-blue-600 px-4 py-2 font-semibold text-white"
-                      >
-                        Open results
-                      </Link>
-                      <Link
-                        to={`/admin/elections/${selectedElection.id}/ballots`}
-                        className="inline-flex rounded bg-violet-700 px-4 py-2 font-semibold text-white"
-                      >
-                        Print cast ballots
-                      </Link>
-                      <Link
-                        to={`/results/${selectedElection.id}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex rounded bg-indigo-600 px-4 py-2 font-semibold text-white"
-                      >
-                        Open public results
-                      </Link>
-                      <button
-                        type="button"
-                        className="inline-flex rounded bg-slate-200 px-4 py-2 font-semibold text-slate-900"
-                        onClick={onCopyPublicResultsLink}
-                      >
-                        Copy public results link
-                      </button>
-                      <button
-                        type="button"
-                        className="inline-flex rounded bg-red-700 px-4 py-2 font-semibold text-white"
-                        onClick={onResetElection}
-                        disabled={resetVotes.isLoading}
-                      >
-                        {resetVotes.isLoading ? "Resetting..." : "Reset election"}
-                      </button>
+                <div className="mt-8 space-y-6 rounded-[2rem] bg-slate-100/90 p-5 shadow-sm ring-1 ring-slate-200 md:p-6">
+                  <div className="grid gap-4 xl:grid-cols-[1.2fr_1fr]">
+                    <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        Election Overview
+                      </p>
+                      <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start">
+                        <img
+                          src={selectedElection.img || DEFAULT_ELECTION_IMAGE}
+                          alt={selectedElection.name}
+                          className="h-24 w-24 rounded-3xl object-cover ring-1 ring-slate-200"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <h3 className="text-2xl font-bold tracking-tight text-slate-900">
+                              {selectedElection.name}
+                            </h3>
+                            {selectedElection.isActive && (
+                              <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
+                                Active
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                            Manage ballot panels, voter rosters, operators, and published results for this election from one place.
+                          </p>
+                          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                            <div className="rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200">
+                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                Panels
+                              </p>
+                              <p className="mt-1 text-2xl font-bold text-slate-900">
+                                {selectedElection.Panels.length}
+                              </p>
+                            </div>
+                            <div className="rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200">
+                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                Roster
+                              </p>
+                              <p className="mt-1 text-2xl font-bold text-slate-900">
+                                {selectedElection.Voters.length}
+                              </p>
+                            </div>
+                            <div className="rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200">
+                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                Ballots Cast
+                              </p>
+                              <p className="mt-1 text-2xl font-bold text-slate-900">
+                                {new Set(selectedElection.Votes.map((vote) => vote.voterId)).size}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-3xl bg-slate-900 p-5 text-white shadow-sm ring-1 ring-slate-800">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">
+                        Quick Actions
+                      </p>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          className="inline-flex justify-center rounded-2xl bg-emerald-600 px-4 py-3 font-semibold text-white"
+                          onClick={() => setShowAddPanelModal(true)}
+                        >
+                          Add panel
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex justify-center rounded-2xl bg-amber-500 px-4 py-3 font-semibold text-slate-950"
+                          onClick={() => setShowImportVotersModal(true)}
+                        >
+                          Import voter list
+                        </button>
+                        <Link
+                          to={`/admin/elections/${selectedElection.id}/voters`}
+                          className="inline-flex justify-center rounded-2xl bg-white/10 px-4 py-3 font-semibold text-white ring-1 ring-white/15"
+                        >
+                          Open voter roster
+                        </Link>
+                        <Link
+                          to={`/admin/elections/${selectedElection.id}/results`}
+                          className="inline-flex justify-center rounded-2xl bg-blue-600 px-4 py-3 font-semibold text-white"
+                        >
+                          Open results
+                        </Link>
+                        <Link
+                          to={`/admin/elections/${selectedElection.id}/ballots`}
+                          className="inline-flex justify-center rounded-2xl bg-violet-700 px-4 py-3 font-semibold text-white"
+                        >
+                          Print cast ballots
+                        </Link>
+                        <Link
+                          to={`/results/${selectedElection.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex justify-center rounded-2xl bg-indigo-600 px-4 py-3 font-semibold text-white"
+                        >
+                          Open public results
+                        </Link>
+                        <button
+                          type="button"
+                          className="inline-flex justify-center rounded-2xl bg-white px-4 py-3 font-semibold text-slate-900"
+                          onClick={onCopyPublicResultsLink}
+                        >
+                          Copy public results link
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex justify-center rounded-2xl bg-red-700 px-4 py-3 font-semibold text-white"
+                          onClick={onResetElection}
+                          disabled={resetVotes.isLoading}
+                        >
+                          {resetVotes.isLoading ? "Resetting..." : "Reset election"}
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="mt-8 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                  <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
                     <h4 className="text-lg font-semibold text-slate-900">
                       Operator access
                     </h4>
@@ -884,10 +931,24 @@ export default function Votings({
                     </div>
                   </div>
 
-                  <div className="mt-8">
-                    <h4 className="mb-3 text-lg font-semibold">
-                      Election Panels
-                    </h4>
+                  <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h4 className="text-lg font-semibold text-slate-900">
+                          Election Panels
+                        </h4>
+                        <p className="mt-1 text-sm text-slate-600">
+                          Review the live ballot structure and edit panel content in place.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="rounded-2xl bg-emerald-600 px-4 py-2.5 font-semibold text-white"
+                        onClick={() => setShowAddPanelModal(true)}
+                      >
+                        Add another panel
+                      </button>
+                    </div>
                     {selectedElection.Panels.length === 0 && (
                       <p className="text-gray-600">No panels created yet.</p>
                     )}
@@ -895,7 +956,9 @@ export default function Votings({
                       {selectedElection.Panels.map((panel) => (
                         <div
                           key={panel.id}
-                          className="rounded p-5"
+                          className={`rounded p-5 ${
+                            editingPanelId === panel.id ? "lg:col-span-2" : ""
+                          }`}
                           style={{
                             backgroundColor: panel.panelColor,
                             color: panel.textColor,
@@ -937,7 +1000,7 @@ export default function Votings({
                             </button>
                           </div>
                           {editingPanelId === panel.id && (
-                            <div className="mt-4 rounded bg-white/15 p-4">
+                            <div className="mt-4 rounded-2xl bg-white/15 p-4 md:p-5">
                               <PanelForm
                                 ctaText="Update panel"
                                 data={{

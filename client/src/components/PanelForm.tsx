@@ -222,74 +222,135 @@ export function PanelForm({
   };
 
   return (
-    <div className="p-5 mb-4 rounded bg-zinc-200 flex flex-col justify-center items-center">
-      <div>
-        <input
-          className="m-4 rounded border border-slate-300 bg-white px-3 py-2 text-slate-900"
-          name="panelName"
-          id="panelName"
-          value={panel.panelName}
-          placeholder="Panel name"
-          onChange={(e) =>
-            setPanel((prev) => ({ ...prev, panelName: e.target.value }))
-          }
-        />
-        <label className="text-slate-900" htmlFor="panelName">
-          Name
-        </label>
+    <div className="mb-4 rounded-3xl border border-slate-300 bg-slate-100 p-5 text-left shadow-inner sm:p-6">
+      <div className="grid gap-5 2xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="space-y-5">
+          <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+              Panel Details
+            </p>
+            <div className="mt-4 grid gap-4">
+              <div>
+                <label
+                  className="mb-2 block text-sm font-semibold text-slate-900"
+                  htmlFor="panelName"
+                >
+                  Panel name
+                </label>
+                <input
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900"
+                  name="panelName"
+                  id="panelName"
+                  value={panel.panelName}
+                  placeholder="Panel name"
+                  onChange={(e) =>
+                    setPanel((prev) => ({ ...prev, panelName: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <label
+                  className="mb-2 block text-sm font-semibold text-slate-900"
+                  htmlFor="panelImg"
+                >
+                  Panel image URL
+                </label>
+                <input
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900"
+                  name="panelImg"
+                  id="panelImg"
+                  value={panel.img}
+                  placeholder="Panel image URL"
+                  onChange={(e) =>
+                    setPanel((prev) => ({ ...prev, img: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <label
+                  className="mb-2 block text-sm font-semibold text-slate-900"
+                  htmlFor="panelImgUpload"
+                >
+                  Upload panel image
+                </label>
+                <input
+                  className="block w-full text-sm text-slate-900 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2.5 file:font-semibold file:text-white"
+                  id="panelImgUpload"
+                  type="file"
+                  accept="image/*"
+                  onChange={onPanelImageUpload}
+                />
+                <p className="mt-2 text-xs text-slate-500">
+                  Use either a direct image link or upload a file.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Panel Styling
+          </p>
+          <div className="mt-4 space-y-5">
+            <ColorPicker
+              label="Background"
+              value={panel.panelColor}
+              options={PANEL_COLOR_OPTIONS}
+              onChange={(value) =>
+                setPanel((prev) => ({ ...prev, panelColor: value }))
+              }
+            />
+            <ColorPicker
+              label="Text"
+              value={panel.textColor}
+              options={TEXT_COLOR_OPTIONS}
+              onChange={(value) =>
+                setPanel((prev) => ({ ...prev, textColor: value }))
+              }
+            />
+          </div>
+        </section>
       </div>
-      <ColorPicker
-        label="Background"
-        value={panel.panelColor}
-        options={PANEL_COLOR_OPTIONS}
-        onChange={(value) =>
-          setPanel((prev) => ({ ...prev, panelColor: value }))
-        }
-      />
-      <ColorPicker
-        label="Text"
-        value={panel.textColor}
-        options={TEXT_COLOR_OPTIONS}
-        onChange={(value) =>
-          setPanel((prev) => ({ ...prev, textColor: value }))
-        }
-      />
-      <div>
-        <input
-          className="m-4 rounded border border-slate-300 bg-white px-3 py-2 text-slate-900"
-          name="panelImg"
-          id="panelImg"
-          value={panel.img}
-          placeholder="Panel image URL"
-          onChange={(e) =>
-            setPanel((prev) => ({ ...prev, img: e.target.value }))
-          }
-        />
-        <label className="text-slate-900" htmlFor="panelImg">
-          Image URL (optional)
-        </label>
-        <input
-          className="m-4 block text-slate-900"
-          id="panelImgUpload"
-          type="file"
-          accept="image/*"
-          onChange={onPanelImageUpload}
-        />
-        <label className="text-slate-900" htmlFor="panelImgUpload">
-          Or upload panel image
-        </label>
-      </div>
-      <div className="w-full">
+
+      <div className="mt-6">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+              Ballot Candidates
+            </p>
+            <h4 className="mt-2 text-lg font-semibold text-slate-900">
+              Edit candidate rows
+            </h4>
+          </div>
+          <button
+            type="button"
+            className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white"
+            onClick={onAddCandidate}
+          >
+            Add candidate
+          </button>
+        </div>
+
+        <div className="space-y-4">
         {panel.candidates.map((candidate, idx) => (
-          <div key={candidate.id ?? idx} className="mb-4 rounded bg-white/40 p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <label className="block font-semibold text-slate-900">
-                Candidate {idx + 1}
-              </label>
-              <div className="flex items-center gap-2">
+          <div
+            key={candidate.id ?? idx}
+            className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200"
+          >
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  Candidate {idx + 1}
+                </p>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                  Ballot row {idx + 1}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  className="rounded bg-slate-200 px-3 py-1 text-sm text-slate-700 disabled:opacity-40"
+                  className="rounded-xl bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40"
                   onClick={() => onMoveCandidate(idx, "up")}
                   disabled={idx === 0}
                 >
@@ -297,7 +358,7 @@ export function PanelForm({
                 </button>
                 <button
                   type="button"
-                  className="rounded bg-slate-200 px-3 py-1 text-sm text-slate-700 disabled:opacity-40"
+                  className="rounded-xl bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40"
                   onClick={() => onMoveCandidate(idx, "down")}
                   disabled={idx === panel.candidates.length - 1}
                 >
@@ -305,108 +366,134 @@ export function PanelForm({
                 </button>
                 <button
                   type="button"
-                  className="rounded bg-red-100 px-3 py-1 text-sm text-red-700"
+                  className="rounded-xl bg-red-100 px-3 py-2 text-sm font-semibold text-red-700"
                   onClick={() => onRemoveCandidate(idx)}
                 >
                   Remove
                 </button>
               </div>
             </div>
-            <Dropdown className="mb-3 w-full">
-              <Dropdown.Toggle
-                variant="light"
-                className="flex min-h-[48px] w-full items-center justify-between rounded border border-slate-300 bg-white px-3 py-2 text-left text-slate-900"
-              >
-                {candidate.position || "Select role"}
-              </Dropdown.Toggle>
-              <Dropdown.Menu className="w-full min-w-[220px] rounded-xl border border-slate-200 p-2 shadow-xl">
-                {POSITION_OPTIONS.map((position) => (
-                  <Dropdown.Item
-                    key={position}
-                    active={candidate.position === position}
-                    className="rounded-lg px-3 py-2 text-base"
-                    onClick={() =>
-                      setPanel((prev) => ({
-                        ...prev,
-                        candidates: prev.candidates.map((item, itemIdx) =>
-                          itemIdx === idx
-                            ? {
-                                ...item,
-                                position,
-                              }
-                            : item
-                        ),
-                      }))
-                    }
+            <div className="grid gap-4 2xl:grid-cols-[1fr_1fr]">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-900">
+                  Role quick pick
+                </label>
+                <Dropdown className="w-full">
+                  <Dropdown.Toggle
+                    variant="light"
+                    className="flex min-h-[48px] w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-4 py-3 text-left text-slate-900"
                   >
-                    {position}
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown>
-            <input
-              className="mb-3 w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900"
-              value={candidate.position}
-              placeholder="Candidate role"
-              onChange={(e) =>
-                setPanel((prev) => ({
-                  ...prev,
-                  candidates: prev.candidates.map((item, itemIdx) =>
-                    itemIdx === idx
-                      ? { ...item, position: e.target.value }
-                      : item
-                  ),
-                }))
-              }
-            />
-            <input
-              className="mb-3 w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900"
-              value={candidate.name}
-              placeholder={`${candidate.position} candidate`}
-              onChange={(e) =>
-                setPanel((prev) => ({
-                  ...prev,
-                  candidates: prev.candidates.map((item, itemIdx) =>
-                    itemIdx === idx ? { ...item, name: e.target.value } : item
-                  ),
-                }))
-              }
-            />
-            <input
-              className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900"
-              value={candidate.img}
-              placeholder="Candidate image URL"
-              onChange={(e) =>
-                setPanel((prev) => ({
-                  ...prev,
-                  candidates: prev.candidates.map((item, itemIdx) =>
-                    itemIdx === idx ? { ...item, img: e.target.value } : item
-                  ),
-                }))
-              }
-            />
-            <input
-              className="mt-3 w-full text-slate-900"
-              type="file"
-              accept="image/*"
-              onChange={(event) => onCandidateImageUpload(event, idx)}
-            />
-            <p className="mt-2 text-xs text-slate-700">
-              Use a link or upload a file. Leave blank to use the default
-              candidate placeholder.
-            </p>
+                    {candidate.position || "Select role"}
+                  </Dropdown.Toggle>
+                  <Dropdown.Menu className="w-full min-w-[220px] rounded-xl border border-slate-200 p-2 shadow-xl">
+                    {POSITION_OPTIONS.map((position) => (
+                      <Dropdown.Item
+                        key={position}
+                        active={candidate.position === position}
+                        className="rounded-lg px-3 py-2 text-base"
+                        onClick={() =>
+                          setPanel((prev) => ({
+                            ...prev,
+                            candidates: prev.candidates.map((item, itemIdx) =>
+                              itemIdx === idx
+                                ? {
+                                    ...item,
+                                    position,
+                                  }
+                                : item
+                            ),
+                          }))
+                        }
+                      >
+                        {position}
+                      </Dropdown.Item>
+                    ))}
+                  </Dropdown.Menu>
+                </Dropdown>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-900">
+                  Role name
+                </label>
+                <input
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900"
+                  value={candidate.position}
+                  placeholder="Candidate role"
+                  onChange={(e) =>
+                    setPanel((prev) => ({
+                      ...prev,
+                      candidates: prev.candidates.map((item, itemIdx) =>
+                        itemIdx === idx
+                          ? { ...item, position: e.target.value }
+                          : item
+                      ),
+                    }))
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-900">
+                  Candidate name
+                </label>
+                <input
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900"
+                  value={candidate.name}
+                  placeholder={`${candidate.position} candidate`}
+                  onChange={(e) =>
+                    setPanel((prev) => ({
+                      ...prev,
+                      candidates: prev.candidates.map((item, itemIdx) =>
+                        itemIdx === idx ? { ...item, name: e.target.value } : item
+                      ),
+                    }))
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-900">
+                  Candidate image URL
+                </label>
+                <input
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900"
+                  value={candidate.img}
+                  placeholder="Candidate image URL"
+                  onChange={(e) =>
+                    setPanel((prev) => ({
+                      ...prev,
+                      candidates: prev.candidates.map((item, itemIdx) =>
+                        itemIdx === idx ? { ...item, img: e.target.value } : item
+                      ),
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="mb-2 block text-sm font-semibold text-slate-900">
+                Upload candidate image
+              </label>
+              <input
+                className="block w-full text-sm text-slate-900 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2.5 file:font-semibold file:text-white"
+                type="file"
+                accept="image/*"
+                onChange={(event) => onCandidateImageUpload(event, idx)}
+              />
+              <p className="mt-2 text-xs text-slate-500">
+                Use a link or upload a file. Leave blank to use the default
+                candidate placeholder.
+              </p>
+            </div>
           </div>
         ))}
+        </div>
       </div>
+
       <button
-        type="button"
-        className="mb-4 rounded bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-800"
-        onClick={onAddCandidate}
-      >
-        Add candidate
-      </button>
-      <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+        className="mt-6 w-full rounded-2xl bg-blue-600 px-5 py-3 font-bold text-white transition hover:bg-blue-700"
         type="button"
         onClick={onSubmitPanel}
       >
@@ -429,10 +516,10 @@ function ColorPicker({
 }) {
   return (
     <div className="mb-4 w-full">
-      <label className="mb-2 block text-center font-semibold text-slate-900">
+      <label className="mb-2 block text-sm font-semibold text-slate-900">
         {label}
       </label>
-      <div className="flex flex-wrap items-center justify-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {options.map((option) => {
           const isActive = option.toLowerCase() === value.toLowerCase();
           return (
@@ -450,7 +537,7 @@ function ColorPicker({
         })}
       </div>
       <input
-        className="mx-auto mt-3 block w-full max-w-[220px] rounded border border-slate-300 bg-white px-3 py-2 text-center text-slate-900"
+        className="mt-3 block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder="#000000"

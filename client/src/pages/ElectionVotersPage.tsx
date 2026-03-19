@@ -121,6 +121,7 @@ export function ElectionVotersPage({
   const [selectedDeviceByVoter, setSelectedDeviceByVoter] = useState<
     Record<number, string>
   >({});
+  const [selectedVoterId, setSelectedVoterId] = useState<number | null>(null);
   const [devices, setDevices] = useState<ConnectedDevice[]>([]);
 
   const [page, setPage] = useState(1);
@@ -289,9 +290,9 @@ export function ElectionVotersPage({
   }
 
   return (
-    <div className="bg-white py-12 sm:py-14">
+    <div className="bg-slate-50 py-12 sm:py-14">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
               {operatorMode ? "Assigned Election" : "Election Voters"}
@@ -318,61 +319,98 @@ export function ElectionVotersPage({
           )}
         </div>
 
-        <div className="mb-6 rounded bg-slate-100 p-4">
-          <input
-            className="w-full rounded border border-slate-300 bg-white px-4 py-3 text-slate-900"
-            placeholder="Search by voter number or name"
-            value={query}
-            onChange={(event: ChangeEvent<HTMLInputElement>) =>
-              {
-                setQuery(event.target.value);
-                setPage(1);
-              }
-            }
-          />
-        </div>
-
-        <div className="mb-4 flex flex-col gap-3 rounded bg-slate-50 px-4 py-3 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            Showing {pagedVoters.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}-
-            {Math.min(currentPage * PAGE_SIZE, filteredVoters.length)} of{" "}
-            {filteredVoters.length} voters
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPage((value) => Math.max(1, value - 1))}
-              disabled={currentPage === 1}
-              className="rounded border border-slate-300 px-3 py-2 font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span className="min-w-[96px] text-center font-semibold text-slate-700">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
-              disabled={currentPage === totalPages}
-              className="rounded border border-slate-300 px-3 py-2 font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Next
-            </button>
+        <div className="sticky top-4 z-20 mb-6 rounded-[1.5rem] border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur md:p-4">
+          <div className="grid gap-3 2xl:grid-cols-[minmax(0,1.4fr)_auto] 2xl:items-center">
+            <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+              <input
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900"
+                placeholder="Search by voter number or name"
+                value={query}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  setQuery(event.target.value);
+                  setPage(1);
+                }}
+              />
+              <div className="grid gap-2 sm:grid-cols-3">
+                <div className="rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-slate-200">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Showing
+                  </p>
+                  <p className="mt-1 text-base font-bold text-slate-900">
+                    {pagedVoters.length === 0
+                      ? "0"
+                      : `${(currentPage - 1) * PAGE_SIZE + 1}-${Math.min(
+                          currentPage * PAGE_SIZE,
+                          filteredVoters.length
+                        )}`}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-slate-200">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Total
+                  </p>
+                  <p className="mt-1 text-base font-bold text-slate-900">
+                    {filteredVoters.length}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-slate-200">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Voted
+                  </p>
+                  <p className="mt-1 text-base font-bold text-slate-900">
+                    {votedVoterIds.size}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((value) => Math.max(1, value - 1))}
+                disabled={currentPage === 1}
+                className="rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="min-w-[108px] text-center text-sm font-semibold text-slate-700">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+                disabled={currentPage === totalPages}
+                className="rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded bg-white shadow">
+        <div className="overflow-x-auto rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
           <table className="min-w-full bg-white">
             <thead>
-              <tr className="border-b text-left">
+              <tr className="border-b border-slate-200 bg-slate-50 text-left">
+                <th className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Track
+                </th>
                 {visibleColumns.map((column) => (
-                  <th key={column.key} className="py-3 px-4">
+                  <th
+                    key={column.key}
+                    className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500"
+                  >
                     {column.label}
                   </th>
                 ))}
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Device</th>
-                <th className="py-3 px-4">Actions</th>
+                <th className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Status
+                </th>
+                <th className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Device
+                </th>
+                <th className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -381,57 +419,88 @@ export function ElectionVotersPage({
                   (device) => device.voterId === entry.Voter.voterId
                 );
                 const hasVoted = votedVoterIds.has(entry.Voter.voterId);
+                const isSelected = selectedVoterId === entry.Voter.voterId;
                 const selectedDeviceName =
                   selectedDeviceByVoter[entry.Voter.voterId] ||
                   assignedDevice?.name ||
                   "";
 
                 return (
-                  <tr key={entry.id} className="border-b align-top">
+                  <tr
+                    key={entry.id}
+                    className={`border-b align-top transition ${
+                      isSelected
+                        ? "bg-amber-50 ring-inset"
+                        : "bg-white hover:bg-slate-50"
+                    }`}
+                  >
+                    <td className="px-3 py-3">
+                      <button
+                        type="button"
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                          isSelected
+                            ? "bg-amber-500 text-white"
+                            : "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                        }`}
+                        onClick={() =>
+                          setSelectedVoterId((current) =>
+                            current === entry.Voter.voterId
+                              ? null
+                              : entry.Voter.voterId
+                          )
+                        }
+                      >
+                        {isSelected ? "Selected" : "Highlight"}
+                      </button>
+                    </td>
                     {visibleColumns.map((column) => (
                       <td
                         key={column.key}
-                        className="max-w-[240px] whitespace-pre-wrap break-words py-3 px-4 text-sm text-slate-700"
+                        className={`max-w-[190px] whitespace-pre-wrap break-words px-3 py-3 text-[13px] ${
+                          isSelected
+                            ? "font-semibold text-slate-900"
+                            : "text-slate-700"
+                        }`}
                       >
                         {column.getValue(entry) || "—"}
                       </td>
                     ))}
-                    <td className="py-3 px-4">
+                    <td className="px-3 py-3">
                       {hasVoted ? (
-                        <span className="rounded bg-green-100 px-2 py-1 text-sm font-semibold text-green-800">
+                        <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-800">
                           Voted
                         </span>
                       ) : assignedDevice ? (
-                        <span className="rounded bg-blue-100 px-2 py-1 text-sm font-semibold text-blue-800">
+                        <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-800">
                           Assigned
                         </span>
                       ) : (
-                        <span className="rounded bg-slate-100 px-2 py-1 text-sm font-semibold text-slate-700">
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
                           Not assigned
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4 min-w-[220px]">
+                    <td className="min-w-[188px] px-3 py-3">
                       <Dropdown className="w-full">
                         <Dropdown.Toggle
                           disabled={hasVoted}
                           variant="light"
-                          className="flex min-h-[52px] w-full items-center justify-between rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-left text-base font-semibold text-slate-900 shadow-sm hover:border-slate-400 hover:bg-slate-50"
+                          className="flex min-h-[44px] w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2 text-left text-sm font-semibold text-slate-900 shadow-sm hover:border-slate-400 hover:bg-slate-50"
                         >
                           <span className="truncate">
                             {selectedDeviceName || "Select device"}
                           </span>
                         </Dropdown.Toggle>
-                        <Dropdown.Menu className="w-full min-w-[260px] rounded-2xl border border-slate-200 p-2 shadow-2xl">
+                        <Dropdown.Menu className="w-full min-w-[220px] rounded-2xl border border-slate-200 p-2 shadow-2xl">
                           <Dropdown.Item
                             active={!selectedDeviceName}
-                            className="min-h-[52px] rounded-xl px-4 py-3 text-base font-medium"
-                            onClick={() =>
-                              setSelectedDeviceByVoter((prev) => ({
-                                ...prev,
-                                [entry.Voter.voterId]: "",
-                              }))
-                            }
+                                className="min-h-[44px] rounded-xl px-3 py-2 text-sm font-medium"
+                                onClick={() =>
+                                  setSelectedDeviceByVoter((prev) => ({
+                                    ...prev,
+                                    [entry.Voter.voterId]: "",
+                                  }))
+                                }
                           >
                             Select device
                           </Dropdown.Item>
@@ -445,7 +514,7 @@ export function ElectionVotersPage({
                                 key={device.id}
                                 active={selectedDeviceName === device.name}
                                 disabled={isUsedByAnotherVoter}
-                                className="min-h-[52px] rounded-xl px-4 py-3 text-base font-medium"
+                                className="min-h-[44px] rounded-xl px-3 py-2 text-sm font-medium"
                                 onClick={() =>
                                   setSelectedDeviceByVoter((prev) => ({
                                     ...prev,
@@ -467,22 +536,20 @@ export function ElectionVotersPage({
                         </Dropdown.Menu>
                       </Dropdown>
                     </td>
-                    <td className="py-3 px-4 min-w-[220px]">
+                    <td className="min-w-[176px] px-3 py-3">
                       <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
                           disabled={hasVoted || !selectedDeviceName}
-                          className="min-h-[52px] rounded-xl bg-blue-600 px-5 py-3 text-base font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:bg-slate-300"
-                          onClick={() =>
-                            onAssignDeviceToVoter(entry.Voter.voterId)
-                          }
+                          className="min-h-[44px] rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:bg-slate-300"
+                          onClick={() => onAssignDeviceToVoter(entry.Voter.voterId)}
                         >
                           Assign
                         </button>
                         {assignedDevice && !hasVoted && (
                           <button
                             type="button"
-                            className="min-h-[52px] rounded-xl bg-slate-200 px-5 py-3 text-base font-semibold text-slate-900"
+                            className="min-h-[44px] rounded-xl bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-900"
                             onClick={() => onUnassignDevice(assignedDevice.name)}
                           >
                             Unassign
