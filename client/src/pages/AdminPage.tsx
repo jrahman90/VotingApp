@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { logout } from "../store/features/authSlice";
 import { useAppDispatch } from "../store/store";
 import Devices from "../components/Devices";
@@ -8,12 +8,27 @@ import Votings from "../components/Votings";
 export function AdminPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<"devices" | "votings">("devices");
+  const initialTab = searchParams.get("tab") === "votings" ? "votings" : "devices";
+  const initialElectionId = Number(searchParams.get("electionId"));
+
+  const [activeTab, setActiveTab] = useState<"devices" | "votings">(initialTab);
 
   const onLogout = () => {
     dispatch(logout());
     navigate("/");
+  };
+
+  const onChangeTab = (tab: "devices" | "votings") => {
+    setActiveTab(tab);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("tab", tab);
+    if (tab !== "votings") {
+      nextParams.delete("electionId");
+    }
+    setSearchParams(nextParams, { replace: true });
   };
   return (
     <div className="bg-white py-12 sm:py-14">
@@ -42,7 +57,7 @@ export function AdminPage() {
           <li
             role="presentation"
             className="flex-auto text-center"
-            onClick={() => setActiveTab("devices")}
+            onClick={() => onChangeTab("devices")}
           >
             <a
               href="#tabs-devices"
@@ -57,7 +72,7 @@ export function AdminPage() {
           <li
             role="presentation"
             className="flex-auto text-center"
-            onClick={() => setActiveTab("votings")}
+            onClick={() => onChangeTab("votings")}
           >
             <a
               href="#tabs-votings"
@@ -87,7 +102,11 @@ export function AdminPage() {
             } opacity-100 transition-opacity duration-150 ease-linear`}
             id="tabs-votings"
           >
-            <Votings />
+            <Votings
+              initialSelectedElectionId={
+                Number.isFinite(initialElectionId) ? initialElectionId : null
+              }
+            />
           </div>
         </div>
       </div>

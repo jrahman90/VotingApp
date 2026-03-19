@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CandidatesList } from "../components/CandidatesList";
 import { TRPC_REACT } from "../utils/trpc";
 import React from "react";
 import { useAppDispatch, useAppSelector } from "../store/store";
-import { useNavigate } from "react-router-dom";
-import { logout } from "../store/features/authSlice";
 import { useAppAlert } from "../utils/alerts";
 import Modal from "react-bootstrap/Modal";
 import type { OnlineDevice } from "../utils/firebaseApi";
+import { logout } from "../store/features/authSlice";
+import { useNavigate } from "react-router-dom";
 
 interface VotingDetailed {
   id: number;
@@ -54,32 +54,51 @@ interface AssignedVoterDetails {
 }
 
 export function VotingPage() {
-  const { device } = useAppSelector((s) => s.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { device } = useAppSelector((s) => s.auth);
   const { showAlert } = useAppAlert();
 
-  const { data, isError, isLoading } =
-    TRPC_REACT.voting.getOneDetailed.useQuery();
-  const votingData = data as VotingDetailed | undefined;
-
   const [devices, setDevices] = useState<OnlineDevice[]>([]);
+  const [hasLoadedDevices, setHasLoadedDevices] = useState(false);
 
   TRPC_REACT.device.getConnectedDevices.useSubscription(undefined, {
     onData(data) {
       console.log("🚀 ~ onData ~ data:", data);
       setDevices(data as OnlineDevice[]);
+      setHasLoadedDevices(true);
     },
     onError(err) {
       console.log("🚀 ~ onError ~ err:", err);
     },
   });
 
-  const voterId = devices.find((d) => d.name === device?.name)?.voterId;
+  useEffect(() => {
+    if (!device?.name || !hasLoadedDevices) {
+      return;
+    }
+
+    const currentDevice = devices.find((entry) => entry.name === device.name);
+    if (currentDevice) {
+      return;
+    }
+
+    showAlert("This device session was closed by an admin.", "warning");
+    dispatch(logout());
+    navigate("/");
+  }, [device?.name, devices, dispatch, hasLoadedDevices, navigate, showAlert]);
+
+  const currentDevice = devices.find((entry) => entry.name === device?.name);
+  const isApproved = currentDevice?.approved !== false;
+  const { data, isError, isLoading } = TRPC_REACT.voting.getOneDetailed.useQuery({
+    enabled: !!currentDevice?.approved,
+  });
+  const votingData = data as VotingDetailed | undefined;
+  const voterId = currentDevice?.voterId;
   const { data: voterDetails } = TRPC_REACT.voter.getById.useQuery(
     { voterId: voterId as number },
     {
-      enabled: !!voterId,
+      enabled: !!voterId && !!currentDevice?.approved,
     }
   );
   const assignedVoter = voterDetails as AssignedVoterDetails | undefined;
@@ -96,21 +115,13 @@ export function VotingPage() {
     },
   });
 
-  const logoutMutation = TRPC_REACT.device.unregister.useMutation({
-    onError(error) {
-      console.log("🚀 ~ logoutMutation onError ~ error:", error);
-    },
-    onSuccess(data) {
-      console.log("🚀 ~ logoutMutation onSuccess ~ data:", data);
-      dispatch(logout());
-      navigate("/");
-    },
-  });
-
   const [selection, setSelection] = useState<Record<string, number>>({});
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const isEnabled = !!voterId;
+  const panelCount = votingData?.Panels.length || 0;
+  const compactLayout = panelCount >= 4;
+  const ultraCompactLayout = panelCount >= 5;
 
   const positionOrder = Array.from(
     new Set(
@@ -134,16 +145,13 @@ export function VotingPage() {
       candidate,
     };
   });
-
-  const onLogout = () => {
-    logoutMutation.mutate({
-      name: device?.name as string,
-    });
-  };
+  const unselectedPositions = selectedCandidates
+    .filter(({ candidate }) => !candidate)
+    .map(({ label }) => label);
 
   const onVote = () => {
-    if (positionOrder.some((position) => !selection[position])) {
-      showAlert("You must select one candidate for all the positions", "warning");
+    if (Object.keys(selection).length === 0) {
+      showAlert("Select at least one candidate before reviewing your ballot.", "warning");
       return;
     }
 
@@ -161,10 +169,12 @@ export function VotingPage() {
       deviceId: device.id,
       voterId,
       votingId: votingData.id,
-      selections: positionOrder.map((position) => ({
-        position,
-        candidateId: selection[position],
-      })),
+      selections: positionOrder
+        .filter((position) => !!selection[position])
+        .map((position) => ({
+          position,
+          candidateId: selection[position],
+        })),
     });
   };
   const onClear = () => {
@@ -190,13 +200,41 @@ export function VotingPage() {
           loading...
         </p>
       )}
+      {!isLoading && hasLoadedDevices && currentDevice && !isApproved && (
+        <div className="flex h-full items-center justify-center px-6">
+          <div className="w-full max-w-2xl rounded-[2rem] bg-white/92 p-10 text-center shadow-2xl backdrop-blur">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-600">
+              Pending Approval
+            </p>
+            <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-900">
+              Device Awaiting Admin Approval
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-lg leading-8 text-slate-600">
+              This device has been registered successfully. An administrator must approve it
+              from the devices panel before the ballot becomes available.
+            </p>
+            <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 px-6 py-5 text-left">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Device Name
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">{device?.name}</p>
+            </div>
+          </div>
+        </div>
+      )}
       {isError && (
         <p className="flex h-full items-center justify-center px-6 text-center text-sm leading-6 text-slate-200">
           error while fetching the data
         </p>
       )}
-      {!isError && !isLoading && (
-        <div className="mx-auto flex h-full max-w-[1400px] flex-col px-3 py-3 md:px-4 md:py-4">
+      {!isError && !isLoading && (!currentDevice || isApproved) && (
+        <div
+          className={`mx-auto flex h-full max-w-[1600px] flex-col ${
+            ultraCompactLayout
+              ? "px-2 py-2 md:px-3 md:py-3"
+              : "px-3 py-3 md:px-4 md:py-4"
+          }`}
+        >
           {!data && (
             <div className="mx-auto my-auto max-w-2xl rounded-3xl bg-white/90 p-8 shadow-2xl backdrop-blur">
               <p className="tracking-tight text-slate-900 text-center">
@@ -205,44 +243,69 @@ export function VotingPage() {
             </div>
           )}
           {data && (
-            <div className="flex h-full flex-col gap-3">
-              <div className="rounded-[2rem] bg-white/88 p-4 shadow-2xl backdrop-blur md:p-5">
+            <div className={`flex h-full flex-col ${ultraCompactLayout ? "gap-2" : "gap-3"}`}>
+              <div
+                className={`rounded-[2rem] bg-white/88 shadow-2xl backdrop-blur ${
+                  ultraCompactLayout ? "p-3 md:p-3.5" : compactLayout ? "p-3.5 md:p-4" : "p-4 md:p-5"
+                }`}
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div className="max-w-4xl">
                     <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
                       Active Election
                     </p>
-                    <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
+                    <h1
+                      className={`mt-1 font-bold tracking-tight text-slate-900 ${
+                        ultraCompactLayout
+                          ? "text-xl md:text-2xl"
+                          : compactLayout
+                            ? "text-2xl md:text-[1.7rem]"
+                            : "text-2xl md:text-3xl"
+                      }`}
+                    >
                       {votingData?.name}
                     </h1>
                   </div>
-                  <button
-                    type="button"
-                    onClick={onLogout}
-                    className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700 shadow-sm hover:bg-red-100"
-                  >
-                    Close Session
-                  </button>
                 </div>
 
-                <div className="mt-4 grid gap-3 xl:grid-cols-[0.8fr_2fr]">
-                  <div className="rounded-2xl bg-slate-900 p-4 text-white shadow-lg">
+                <div
+                  className={`grid gap-3 ${
+                    ultraCompactLayout ? "mt-3 xl:grid-cols-[0.8fr_2fr]" : "mt-4 xl:grid-cols-[0.8fr_2fr]"
+                  }`}
+                >
+                  <div
+                    className={`rounded-2xl bg-slate-900 text-white shadow-lg ${
+                      ultraCompactLayout ? "p-3" : compactLayout ? "p-3.5" : "p-4"
+                    }`}
+                  >
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-300">
                       Device
                     </p>
-                    <p className="mt-1 text-lg font-semibold">{device?.name}</p>
-                    <p className="mt-3 text-xs uppercase tracking-[0.2em] text-slate-300">
+                    <p className={`mt-1 font-semibold ${ultraCompactLayout ? "text-base" : "text-lg"}`}>
+                      {device?.name}
+                    </p>
+                    <p className={`text-xs uppercase tracking-[0.2em] text-slate-300 ${ultraCompactLayout ? "mt-2" : "mt-3"}`}>
                       Voter Number
                     </p>
-                    <p className="mt-1 text-xl font-bold">{voterId ?? "Not assigned"}</p>
+                    <p className={`mt-1 font-bold ${ultraCompactLayout ? "text-lg" : "text-xl"}`}>
+                      {voterId ?? "Not assigned"}
+                    </p>
                   </div>
 
-                  <div className="rounded-2xl bg-white p-4 shadow-lg">
+                  <div
+                    className={`rounded-2xl bg-white shadow-lg ${
+                      ultraCompactLayout ? "p-3" : compactLayout ? "p-3.5" : "p-4"
+                    }`}
+                  >
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                       Voter Details
                     </p>
                     {assignedVoter ? (
-                      <div className="mt-2 grid gap-x-4 gap-y-1 text-sm text-slate-700 md:grid-cols-2">
+                      <div
+                        className={`mt-2 grid gap-x-4 text-slate-700 md:grid-cols-2 ${
+                          ultraCompactLayout ? "gap-y-0.5 text-xs" : "gap-y-1 text-sm"
+                        }`}
+                      >
                         <p>
                           <b>Name:</b> {assignedVoter.firstAndMiddleName}{" "}
                           {assignedVoter.lastName}
@@ -275,23 +338,40 @@ export function VotingPage() {
               )}
               {isEnabled && (
                 <React.Fragment>
-                  <div className="min-h-0 flex-1 rounded-[2rem] bg-white/82 p-3 shadow-2xl backdrop-blur md:p-4">
+                  <div
+                    className={`min-h-0 flex-1 rounded-[2rem] bg-white/82 shadow-2xl backdrop-blur ${
+                      ultraCompactLayout ? "p-2.5 md:p-3" : compactLayout ? "p-3 md:p-3.5" : "p-3 md:p-4"
+                    }`}
+                  >
                     <CandidatesList
                       panels={votingData?.Panels || []}
                       selection={selection}
                       setSelection={onSelection}
+                      panelCount={panelCount}
                     />
                   </div>
                   <div className="flex justify-center">
-                    <div className="flex items-center gap-3 rounded-[1.75rem] bg-slate-950/90 px-5 py-4 shadow-2xl backdrop-blur">
+                    <div
+                      className={`flex items-center rounded-[1.75rem] bg-slate-950/90 shadow-2xl backdrop-blur ${
+                        ultraCompactLayout ? "gap-2 px-4 py-3" : "gap-3 px-5 py-4"
+                      }`}
+                    >
                       <button
-                        className="min-w-[160px] rounded-xl bg-slate-200 px-5 py-3 text-lg font-bold text-black hover:bg-slate-300"
+                        className={`rounded-xl bg-slate-200 font-bold text-black hover:bg-slate-300 ${
+                          ultraCompactLayout
+                            ? "min-w-[140px] px-4 py-2.5 text-base"
+                            : "min-w-[160px] px-5 py-3 text-lg"
+                        }`}
                         onClick={onClear}
                       >
                         Clear Selections
                       </button>
                       <button
-                        className="min-w-[220px] rounded-xl bg-blue-600 px-6 py-3 text-lg font-bold text-white hover:bg-blue-700"
+                        className={`rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-700 ${
+                          ultraCompactLayout
+                            ? "min-w-[180px] px-5 py-2.5 text-base"
+                            : "min-w-[220px] px-6 py-3 text-lg"
+                        }`}
                         onClick={onVote}
                       >
                         Review And Vote
@@ -317,20 +397,49 @@ export function VotingPage() {
           <p className="mb-4 text-sm text-slate-600">
             Please review your selections carefully before submitting.
           </p>
+          {unselectedPositions.length > 0 && (
+            <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <p className="font-semibold">Some positions are blank.</p>
+              <p className="mt-1">
+                You are about to submit a partial ballot. No vote will be cast for{" "}
+                {unselectedPositions.join(", ")}.
+              </p>
+            </div>
+          )}
           <div className="space-y-3">
             {selectedCandidates.map(({ position, label, candidate }) => (
               <div
                 key={position}
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                className="relative overflow-hidden rounded-2xl border border-slate-200 px-4 py-3"
+                style={{
+                  backgroundImage: candidate?.img
+                    ? `linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.78)), url("${candidate.img}")`
+                    : undefined,
+                  backgroundColor: candidate?.img ? undefined : "#f8fafc",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
               >
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                <p
+                  className={`text-xs font-semibold uppercase tracking-[0.2em] ${
+                    candidate?.img ? "text-slate-200" : "text-slate-500"
+                  }`}
+                >
                   {label}
                 </p>
-                <p className="mt-1 text-lg font-semibold text-slate-900">
+                <p
+                  className={`mt-1 text-lg font-semibold ${
+                    candidate?.img ? "text-white" : "text-slate-900"
+                  }`}
+                >
                   {candidate?.name || "Not selected"}
                 </p>
                 {candidate?.panelName && (
-                  <p className="text-sm text-slate-600">
+                  <p
+                    className={`text-sm ${
+                      candidate?.img ? "text-slate-200" : "text-slate-600"
+                    }`}
+                  >
                     Panel: {candidate.panelName}
                   </p>
                 )}

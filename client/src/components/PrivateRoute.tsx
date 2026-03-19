@@ -3,7 +3,7 @@ import { useAppSelector } from "../store/store";
 
 interface PrivateRouteProps {
   children: React.ReactNode;
-  role: "staff" | "device" | undefined;
+  role: "admin" | "operator" | "device" | undefined;
 }
 
 export function PrivateRoute({ children, role }: PrivateRouteProps) {
@@ -14,7 +14,10 @@ export function PrivateRoute({ children, role }: PrivateRouteProps) {
   if (role === "device" && !device) {
     return <Navigate to={"/"} />;
   }
-  if (role === "staff" && !staff) {
+  if (role === "admin" && (!staff || type !== "admin")) {
+    return <Navigate to={"/"} />;
+  }
+  if (role === "operator" && (!staff || type !== "operator")) {
     return <Navigate to={"/"} />;
   }
   return children;

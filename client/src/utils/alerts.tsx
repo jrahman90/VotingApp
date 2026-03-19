@@ -1,6 +1,7 @@
 import { Alert } from "react-bootstrap";
 import {
   createContext,
+  MouseEventHandler,
   ReactNode,
   useCallback,
   useContext,
@@ -11,14 +12,27 @@ import {
 
 type AlertVariant = "success" | "danger" | "warning" | "info";
 
+interface AlertAction {
+  label: string;
+  variant?: "primary" | "secondary" | "danger";
+  onClick: () => void;
+}
+
 interface AppAlert {
   id: number;
   message: string;
   variant: AlertVariant;
+  actions?: AlertAction[];
+  autoDismiss?: boolean;
 }
 
 interface AlertContextValue {
   showAlert: (message: string, variant?: AlertVariant) => void;
+  showConfirmAlert: (
+    message: string,
+    actions: AlertAction[],
+    variant?: AlertVariant
+  ) => void;
 }
 
 const AlertContext = createContext<AlertContextValue | null>(null);
@@ -33,9 +47,30 @@ export function AlertProvider({ children }: { children: ReactNode }) {
         id: Date.now() + Math.random(),
         message,
         variant,
+        autoDismiss: true,
       },
     ]);
   }, []);
+
+  const showConfirmAlert = useCallback(
+    (
+      message: string,
+      actions: AlertAction[],
+      variant: AlertVariant = "warning"
+    ) => {
+      setAlerts((current) => [
+        ...current,
+        {
+          id: Date.now() + Math.random(),
+          message,
+          variant,
+          actions,
+          autoDismiss: false,
+        },
+      ]);
+    },
+    []
+  );
 
   const dismissAlert = useCallback((id: number) => {
     setAlerts((current) => current.filter((alert) => alert.id !== id));
@@ -44,8 +79,9 @@ export function AlertProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       showAlert,
+      showConfirmAlert,
     }),
-    [showAlert]
+    [showAlert, showConfirmAlert]
   );
 
   return (
@@ -72,14 +108,50 @@ function TimedAlert({
   onClose: () => void;
 }) {
   useEffect(() => {
+    if (alert.autoDismiss === false) {
+      return;
+    }
+
     const timeout = window.setTimeout(onClose, 5000);
     return () => window.clearTimeout(timeout);
-  }, [onClose]);
+  }, [alert.autoDismiss, onClose]);
+
+  const onActionClick =
+    (handler: () => void): MouseEventHandler<HTMLButtonElement> =>
+    () => {
+      handler();
+      onClose();
+    };
 
   return (
     <div className="pointer-events-auto">
       <Alert variant={alert.variant} dismissible onClose={onClose} className="mb-0 shadow-lg">
-        {alert.message}
+        <div className="flex flex-col gap-3">
+          <div>{alert.message}</div>
+          {alert.actions && alert.actions.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {alert.actions.map((action) => {
+                const buttonClasses =
+                  action.variant === "danger"
+                    ? "bg-red-600 text-white hover:bg-red-700"
+                    : action.variant === "secondary"
+                      ? "bg-slate-200 text-slate-900 hover:bg-slate-300"
+                      : "bg-blue-600 text-white hover:bg-blue-700";
+
+                return (
+                  <button
+                    key={action.label}
+                    type="button"
+                    className={`rounded px-3 py-2 text-sm font-semibold transition ${buttonClasses}`}
+                    onClick={onActionClick(action.onClick)}
+                  >
+                    {action.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </Alert>
     </div>
   );

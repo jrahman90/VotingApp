@@ -1,8 +1,10 @@
 import { ChangeEvent, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { TRPC_REACT } from "../utils/trpc";
 import { useAppAlert } from "../utils/alerts";
 import Dropdown from "react-bootstrap/Dropdown";
+import { logout } from "../store/features/authSlice";
+import { useAppDispatch, useAppSelector } from "../store/store";
 
 interface ElectionVoterDetails {
   id: number;
@@ -100,10 +102,21 @@ const BASE_ROSTER_COLUMNS: RosterColumn[] = [
   },
 ];
 
-export function ElectionVotersPage() {
+export function ElectionVotersPage({
+  operatorMode = false,
+}: {
+  operatorMode?: boolean;
+}) {
   const { showAlert } = useAppAlert();
   const params = useParams();
-  const votingId = Number(params.votingId);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { staff } = useAppSelector((state) => state.auth);
+  const votingId = operatorMode
+    ? typeof staff?.assignedVotingId === "number"
+      ? staff.assignedVotingId
+      : Number.NaN
+    : Number(params.votingId);
   const [query, setQuery] = useState("");
   const [selectedDeviceByVoter, setSelectedDeviceByVoter] = useState<
     Record<number, string>
@@ -118,6 +131,11 @@ export function ElectionVotersPage() {
   );
 
   const election = data as ElectionDetails | null;
+
+  const onLogout = () => {
+    dispatch(logout());
+    navigate("/");
+  };
 
   const assignDevice = TRPC_REACT.device.assignVoter.useMutation({
     onError(error) {
@@ -195,6 +213,9 @@ export function ElectionVotersPage() {
     () => new Set(election?.votedVoterIds || []),
     [election]
   );
+  const backToAdminUrl = election
+    ? `/admin?tab=votings&electionId=${election.id}`
+    : "/admin?tab=votings";
 
   const onAssignDeviceToVoter = (voterId: number) => {
     const deviceName = selectedDeviceByVoter[voterId];
@@ -220,13 +241,49 @@ export function ElectionVotersPage() {
     return <p className="py-10 text-center text-gray-600">Loading voters...</p>;
   }
 
+  if (operatorMode && !Number.isFinite(votingId)) {
+    return (
+      <div className="py-16 text-center">
+        <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
+          Operator Access
+        </p>
+        <h1 className="mt-2 text-3xl font-bold text-slate-900">
+          No election assigned
+        </h1>
+        <p className="mt-3 text-slate-600">
+          An admin needs to assign you to an election before you can manage voter check-in.
+        </p>
+        <button
+          type="button"
+          onClick={onLogout}
+          className="mt-6 rounded bg-slate-900 px-4 py-2 font-semibold text-white"
+        >
+          Sign out
+        </button>
+      </div>
+    );
+  }
+
   if (isError || !election) {
     return (
       <div className="py-10 text-center">
         <p className="text-gray-600">Unable to load this election roster.</p>
-        <Link className="mt-4 inline-block text-blue-600" to="/admin">
-          Back to admin
-        </Link>
+        {operatorMode ? (
+          <button
+            type="button"
+            onClick={onLogout}
+            className="mt-4 rounded bg-slate-900 px-4 py-2 font-semibold text-white"
+          >
+            Logout
+          </button>
+        ) : (
+          <Link
+            className="mt-4 inline-block text-blue-600"
+            to="/admin?tab=votings"
+          >
+            Back to admin
+          </Link>
+        )}
       </div>
     );
   }
@@ -237,18 +294,28 @@ export function ElectionVotersPage() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
-              Election Voters
+              {operatorMode ? "Assigned Election" : "Election Voters"}
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
               {election.name}
             </h1>
           </div>
-          <Link
-            to="/admin"
-            className="rounded bg-slate-900 px-4 py-2 font-semibold text-white"
-          >
-            Back to admin
-          </Link>
+          {operatorMode ? (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="rounded bg-slate-900 px-4 py-2 font-semibold text-white"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link
+              to={backToAdminUrl}
+              className="rounded bg-slate-900 px-4 py-2 font-semibold text-white"
+            >
+              Back to admin
+            </Link>
+          )}
         </div>
 
         <div className="mb-6 rounded bg-slate-100 p-4">

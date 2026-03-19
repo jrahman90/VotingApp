@@ -5,6 +5,7 @@ import { AdminPage } from "./pages/AdminPage";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { ElectionVotersPage } from "./pages/ElectionVotersPage";
 import { ElectionResultsPage } from "./pages/ElectionResultsPage";
+import { ElectionBallotsPrintPage } from "./pages/ElectionBallotsPrintPage";
 
 const router = createBrowserRouter([
   {
@@ -22,15 +23,23 @@ const router = createBrowserRouter([
   {
     path: "/admin",
     element: (
-      <PrivateRoute role="staff">
+      <PrivateRoute role="admin">
         <AdminPage />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/operator",
+    element: (
+      <PrivateRoute role="operator">
+        <ElectionVotersPage operatorMode />
       </PrivateRoute>
     ),
   },
   {
     path: "/admin/elections/:votingId/voters",
     element: (
-      <PrivateRoute role="staff">
+      <PrivateRoute role="admin">
         <ElectionVotersPage />
       </PrivateRoute>
     ),
@@ -38,8 +47,16 @@ const router = createBrowserRouter([
   {
     path: "/admin/elections/:votingId/results",
     element: (
-      <PrivateRoute role="staff">
+      <PrivateRoute role="admin">
         <ElectionResultsPage />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/admin/elections/:votingId/ballots",
+    element: (
+      <PrivateRoute role="admin">
+        <ElectionBallotsPrintPage />
       </PrivateRoute>
     ),
   },

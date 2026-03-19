@@ -15,8 +15,21 @@ service cloud.firestore {
       return isSignedIn() && !isAnonymousDevice();
     }
 
+    function currentStaffDoc() {
+      return get(/databases/$(database)/documents/staff/$(request.auth.uid));
+    }
+
+    function isAdminUser() {
+      return isStaffUser() && (
+        !("role" in currentStaffDoc().data) ||
+        currentStaffDoc().data.role == "admin"
+      );
+    }
+
     match /staff/{staffId} {
-      allow read, write: if isStaffUser() && request.auth.uid == staffId;
+      allow create: if isStaffUser() && request.auth.uid == staffId;
+      allow read: if isStaffUser() && (request.auth.uid == staffId || isAdminUser());
+      allow update: if isStaffUser() && (request.auth.uid == staffId || isAdminUser());
     }
 
     match /devices/{deviceId} {
@@ -24,35 +37,41 @@ service cloud.firestore {
       allow write: if isSignedIn();
     }
 
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isAdminUser();
+    }
+
     match /voters/{voterId} {
       allow read: if isSignedIn();
-      allow write: if isStaffUser();
+      allow write: if isAdminUser();
     }
 
     match /elections/{electionId} {
       allow read: if isSignedIn();
-      allow write: if isStaffUser();
+      allow write: if isAdminUser();
     }
 
     match /elections/{electionId}/panels/{panelId} {
       allow read: if isSignedIn();
-      allow write: if isStaffUser();
+      allow write: if isAdminUser();
     }
 
     match /elections/{electionId}/roster/{voterId} {
       allow read: if isSignedIn();
-      allow write: if isStaffUser();
+      allow write: if isAdminUser();
     }
 
     match /elections/{electionId}/ballots/{ballotId} {
       allow read: if isStaffUser();
-      allow create, update: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isStaffUser();
       allow delete: if isStaffUser();
     }
 
     match /publicResults/{electionId} {
       allow read: if true;
-      allow write: if isStaffUser();
+      allow write: if isAdminUser();
     }
 
     match /{document=**} {

@@ -74,15 +74,26 @@ export function ElectionResultsPage() {
   const votingId = Number(params.votingId);
   const isPublicView = !location.pathname.startsWith("/admin");
   const [now, setNow] = useState(() => Date.now());
-
-  const { data, isLoading, isError } = TRPC_REACT.voting.getById.useQuery(
+  const adminQuery = TRPC_REACT.voting.getById.useQuery(
     { votingId },
     {
-      enabled: Number.isFinite(votingId),
+      enabled: Number.isFinite(votingId) && !isPublicView,
       refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMount: true,
+      staleTime: 0,
+    }
+  );
+  const publicQuery = TRPC_REACT.voting.getPublicResults.useQuery(
+    { votingId },
+    {
+      enabled: Number.isFinite(votingId) && isPublicView,
     }
   );
 
+  const data = isPublicView ? publicQuery.data : adminQuery.data;
+  const isLoading = isPublicView ? publicQuery.isLoading : adminQuery.isLoading;
+  const isError = isPublicView ? publicQuery.isError : adminQuery.isError;
   const election = data as ElectionDetails | null;
 
   useEffect(() => {
@@ -255,7 +266,11 @@ export function ElectionResultsPage() {
   if (isError || !election || !results) {
     return (
       <div className="py-10 text-center">
-        <p className="text-gray-600">Unable to load election results.</p>
+        <p className="text-gray-600">
+          {isPublicView
+            ? "Public results are not published yet. Try again in a moment."
+            : "Unable to load election results."}
+        </p>
         {!isPublicView && (
           <Link className="mt-4 inline-block text-blue-600" to="/admin">
             Back to admin
@@ -282,14 +297,14 @@ export function ElectionResultsPage() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.25em] text-slate-300">
-                  {isPublicView ? "Live Election Results" : "Election Results"}
+                  {isPublicView ? "Public Election Results" : "Election Results"}
                 </p>
                 <h1 className="mt-1 text-2xl font-bold tracking-tight lg:text-3xl">
                   {election.name}
                 </h1>
                 {isPublicView && (
                   <p className="mt-1 text-sm text-slate-300">
-                    Full refresh in {refreshCountdown}.
+                    Next update in {refreshCountdown}.
                   </p>
                 )}
                 {!isPublicView && (
@@ -306,6 +321,12 @@ export function ElectionResultsPage() {
                       className="rounded bg-white/15 px-4 py-2 font-semibold text-white backdrop-blur-sm"
                     >
                       Open voter roster
+                    </Link>
+                    <Link
+                      to={`/admin/elections/${election.id}/ballots`}
+                      className="rounded bg-violet-600 px-4 py-2 font-semibold text-white"
+                    >
+                      Print cast ballots
                     </Link>
                     <Link
                       to="/admin"
@@ -341,6 +362,39 @@ export function ElectionResultsPage() {
           </div>
         </div>
 
+        {results.ballotsCast === 0 && (
+          <div className="mt-4 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
+            <div className="relative px-6 py-10 sm:px-8 sm:py-12">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_38%),radial-gradient(circle_at_bottom_right,_rgba(16,185,129,0.12),_transparent_34%)]" />
+              <div className="relative mx-auto max-w-3xl text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 text-2xl font-bold text-white shadow-lg">
+                  0
+                </div>
+                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.32em] text-slate-500">
+                  Awaiting first ballot
+                </p>
+                <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+                  Election Has Not Started
+                </h2>
+                <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-slate-600">
+                  No ballots have been recorded for this election yet. Results
+                  will appear here automatically once voting begins.
+                </p>
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                  <div className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
+                    Registered voters: {results.registeredVoters}
+                  </div>
+                  <div className="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
+                    Published results update hourly
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {results.ballotsCast > 0 && (
+          <>
         <div className="mt-4 rounded-3xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-base font-bold text-slate-900">Chance To Win</h2>
@@ -471,6 +525,8 @@ export function ElectionResultsPage() {
             </section>
           ))}
         </div>
+          </>
+        )}
       </div>
     </div>
   );

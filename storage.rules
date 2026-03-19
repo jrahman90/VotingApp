@@ -6,24 +6,28 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    function isAdmin() {
+    function isAnonymousDevice() {
       return isSignedIn() &&
-        request.auth.token.admin == true;
+        request.auth.token.firebase.sign_in_provider == "anonymous";
+    }
+
+    function isStaffUser() {
+      return isSignedIn() && !isAnonymousDevice();
     }
 
     match /elections/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaffUser();
     }
 
     match /panels/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaffUser();
     }
 
     match /candidates/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaffUser();
     }
 
     match /{allPaths=**} {

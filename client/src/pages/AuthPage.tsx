@@ -15,6 +15,7 @@ export function AuthPage() {
   const [deviceName, setDeviceName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const { showAlert } = useAppAlert();
 
@@ -22,7 +23,7 @@ export function AuthPage() {
     onSuccess(data) {
       console.log("🚀 ~ onSuccess ~ data:", data);
       dispatch(loginStaff({ staff: data }));
-      navigate("/admin");
+      navigate(data.role === "operator" ? "/operator" : "/admin");
     },
     onError(error) {
       showAlert(error.message);
@@ -44,7 +45,7 @@ export function AuthPage() {
 
   const onRegister = () => {
     if (!deviceName) {
-      setErrors(["device"]);
+      setErrors([!deviceName ? "device" : ""]);
       return;
     }
     setErrors([]);
@@ -114,7 +115,7 @@ export function AuthPage() {
 
           {/* ADMIN USER */}
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl text-center mb-5">
-            Admin user
+            Staff user
           </h2>
           <form
             className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
@@ -146,14 +147,23 @@ export function AuthPage() {
               >
                 Password
               </label>
-              <input
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
-                id="password"
-                type="password"
-                placeholder="******************"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="******************"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="mb-3 rounded border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
+                  onClick={() => setShowPassword((value) => !value)}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
               {errors.includes("password") && (
                 <p className="text-red-500 text-xs italic">
                   Password is required

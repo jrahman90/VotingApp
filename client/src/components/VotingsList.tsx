@@ -53,7 +53,7 @@ const SingleVoting = ({
   isSelected,
   v,
 }: SingleVotingProps) => {
-  const { showAlert } = useAppAlert();
+  const { showAlert, showConfirmAlert } = useAppAlert();
   const [isEdit, setIsEdit] = useState(false);
   const [name, setName] = useState(v.name);
   const [img, setImg] = useState(v.img);
@@ -106,16 +106,21 @@ const SingleVoting = ({
 
   const onDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-
-    const isConfirmed = window.confirm(
-      `Delete "${v.name}" and all of its panels, assigned voters, and results?`
+    showConfirmAlert(
+      `Delete "${v.name}" and all of its panels, assigned voters, and results?`,
+      [
+        {
+          label: "Cancel",
+          variant: "secondary",
+          onClick: () => undefined,
+        },
+        {
+          label: "Delete election",
+          variant: "danger",
+          onClick: () => deleteMutation.mutate({ votingId: v.id }),
+        },
+      ]
     );
-
-    if (!isConfirmed) {
-      return;
-    }
-
-    deleteMutation.mutate({ votingId: v.id });
   };
   return (
     <li

@@ -1,5 +1,5 @@
-import { ChangeEvent, useState } from "react";
-import { Link } from "react-router-dom";
+import { ChangeEvent, useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import Modal from "react-bootstrap/Modal";
 import { MdAdd } from "react-icons/md";
 import { useVotings } from "../hooks/useVotings";
@@ -16,6 +16,7 @@ import * as XLSX from "xlsx";
 import { TRPC_REACT } from "../utils/trpc";
 import { uploadImageFile } from "../utils/images";
 import { getErrorMessage, useAppAlert } from "../utils/alerts";
+import { useAppSelector } from "../store/store";
 
 const DEFAULT_ELECTION_IMAGE =
   "https://placehold.co/240x240/png?text=Election";
@@ -57,6 +58,14 @@ interface AssignedVoter {
   yob: number;
   permanentAddress: string;
   comments?: string | null;
+}
+
+interface StaffUserRecord {
+  uid?: string;
+  id: number;
+  email: string;
+  role?: "admin" | "operator";
+  assignedVotingId?: number | null;
 }
 
 interface ElectionPanel {
@@ -319,15 +328,28 @@ function VotingForm() {
   );
 }
 
-export default function Votings() {
-  const { showAlert } = useAppAlert();
+export default function Votings({
+  initialSelectedElectionId = null,
+}: {
+  initialSelectedElectionId?: number | null;
+}) {
+  const { showAlert, showConfirmAlert } = useAppAlert();
+  const authStaff = useAppSelector((state) => state.auth.staff);
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data, isError, isLoading } = useVotings();
-  const [selected, setSelected] = useState<null | number>(null);
+  const { data: staffUsers } = TRPC_REACT.staff.getAll.useQuery();
+  const [selected, setSelected] = useState<null | number>(initialSelectedElectionId);
   const [editingPanelId, setEditingPanelId] = useState<number | null>(null);
   const [showAddPanelModal, setShowAddPanelModal] = useState(false);
   const [showImportVotersModal, setShowImportVotersModal] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [operatorEmail, setOperatorEmail] = useState("");
+  const [operatorPassword, setOperatorPassword] = useState("");
   const [previewRows, setPreviewRows] = useState<ParsedVoter[]>([]);
+  const [importProgress, setImportProgress] = useState<{
+    total: number;
+    imported: number;
+  } | null>(null);
   const createPanel = useCreatePanel(() => setShowAddPanelModal(false));
   const updatePanel = useUpdatePanel(() => setEditingPanelId(null));
   const utils = TRPC_REACT.useUtils();
@@ -358,21 +380,71 @@ export default function Votings() {
       showAlert(error.message);
     },
   });
+  const resetVotes = TRPC_REACT.voting.resetVotes.useMutation({
+    onSuccess(data) {
+      showAlert(
+        data.count > 0
+          ? `Reset ${data.count} cast ballots for this election.`
+          : "This election had no cast ballots to reset.",
+        "success"
+      );
+      utils.voting.getAll.invalidate();
+      utils.voting.getOneDetailed.invalidate();
+      utils.voting.getById.invalidate({ votingId: selectedElection?.id });
+      utils.voting.getRoster.invalidate({ votingId: selectedElection?.id });
+    },
+    onError(error) {
+      showAlert(error.message);
+    },
+  });
+  const updateStaffAccess = TRPC_REACT.staff.updateAccess.useMutation({
+    onSuccess() {
+      showAlert("User access updated.", "success");
+      utils.staff.getAll.invalidate();
+    },
+    onError(error) {
+      showAlert(error.message);
+    },
+  });
+  const createOperator = TRPC_REACT.staff.createOperator.useMutation({
+    onSuccess() {
+      showAlert("Operator account created.", "success");
+      setOperatorEmail("");
+      setOperatorPassword("");
+      utils.staff.getAll.invalidate();
+    },
+    onError(error) {
+      showAlert(error.message);
+    },
+  });
 
   const selectedElection =
     (data as VotingRecord[] | undefined)?.find((election) => election.id === selected) ||
     null;
+
+  useEffect(() => {
+    if (initialSelectedElectionId) {
+      setSelected(initialSelectedElectionId);
+    }
+  }, [initialSelectedElectionId]);
 
   const onClickVoting = (id: number) => {
     if (selected === id) {
       setSelected(null);
       setShowAddPanelModal(false);
       setShowImportVotersModal(false);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("electionId");
+      setSearchParams(nextParams, { replace: true });
       return;
     }
     setSelected(id);
     setShowAddPanelModal(false);
     setShowImportVotersModal(false);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("tab", "votings");
+    nextParams.set("electionId", String(id));
+    setSearchParams(nextParams, { replace: true });
   };
 
   const onCreatePanel = (payload: PanelFormType) => {
@@ -401,15 +473,18 @@ export default function Votings() {
   };
 
   const onDeletePanel = (panelId: number) => {
-    const isConfirmed = window.confirm(
-      "Delete this panel and all votes tied to its candidates?"
-    );
-
-    if (!isConfirmed) {
-      return;
-    }
-
-    deletePanel.mutate({ panelId });
+    showConfirmAlert("Delete this panel and all votes tied to its candidates?", [
+      {
+        label: "Cancel",
+        variant: "secondary",
+        onClick: () => undefined,
+      },
+      {
+        label: "Delete panel",
+        variant: "danger",
+        onClick: () => deletePanel.mutate({ panelId }),
+      },
+    ]);
   };
 
   const onFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -441,6 +516,10 @@ export default function Votings() {
 
     const chunks = chunkRows(previewRows, 250);
     let importedCount = 0;
+    setImportProgress({
+      total: previewRows.length,
+      imported: 0,
+    });
 
     try {
       for (const chunk of chunks) {
@@ -450,15 +529,21 @@ export default function Votings() {
         });
 
         importedCount += response.count;
+        setImportProgress({
+          total: previewRows.length,
+          imported: importedCount,
+        });
       }
 
       showAlert(`Imported ${importedCount} voters into this election`, "success");
       setFileName("");
       setPreviewRows([]);
+      setImportProgress(null);
       setShowImportVotersModal(false);
       await utils.voting.getAll.invalidate();
       await utils.voting.getOneDetailed.invalidate();
     } catch (error) {
+      setImportProgress(null);
       showAlert(getErrorMessage(error, "Unable to import voters."));
     }
   };
@@ -469,17 +554,24 @@ export default function Votings() {
       return;
     }
 
-    const isConfirmed = window.confirm(
-      `Clear the entire voter list for "${selectedElection.name}"? This will also remove votes recorded for this election.`
+    showConfirmAlert(
+      `Clear the entire voter list for "${selectedElection.name}"? This will also remove votes recorded for this election.`,
+      [
+        {
+          label: "Cancel",
+          variant: "secondary",
+          onClick: () => undefined,
+        },
+        {
+          label: "Clear voter list",
+          variant: "danger",
+          onClick: () =>
+            clearVoters.mutate({
+              votingId: selectedElection.id,
+            }),
+        },
+      ]
     );
-
-    if (!isConfirmed) {
-      return;
-    }
-
-    clearVoters.mutate({
-      votingId: selectedElection.id,
-    });
   };
 
   const onCopyPublicResultsLink = async () => {
@@ -495,6 +587,47 @@ export default function Votings() {
     } catch (error) {
       showAlert(getErrorMessage(error, "Unable to copy the results link."));
     }
+  };
+
+  const onResetElection = () => {
+    if (!selectedElection) {
+      showAlert("Select an election first", "warning");
+      return;
+    }
+
+    showConfirmAlert(
+      `Reset "${selectedElection.name}"? This will permanently remove all cast ballots and clear the election results.`,
+      [
+        {
+          label: "Cancel",
+          variant: "secondary",
+          onClick: () => undefined,
+        },
+        {
+          label: "Reset election",
+          variant: "danger",
+          onClick: () => resetVotes.mutate({ votingId: selectedElection.id }),
+        },
+      ]
+    );
+  };
+
+  const onCreateOperator = () => {
+    if (!selectedElection) {
+      showAlert("Select an election first", "warning");
+      return;
+    }
+
+    if (!operatorEmail.trim() || !operatorPassword.trim()) {
+      showAlert("Operator email and password are required.", "warning");
+      return;
+    }
+
+    createOperator.mutate({
+      email: operatorEmail,
+      password: operatorPassword,
+      assignedVotingId: selectedElection.id,
+    });
   };
 
   return (
@@ -567,6 +700,12 @@ export default function Votings() {
                         Open results
                       </Link>
                       <Link
+                        to={`/admin/elections/${selectedElection.id}/ballots`}
+                        className="inline-flex rounded bg-violet-700 px-4 py-2 font-semibold text-white"
+                      >
+                        Print cast ballots
+                      </Link>
+                      <Link
                         to={`/results/${selectedElection.id}`}
                         target="_blank"
                         rel="noreferrer"
@@ -581,6 +720,154 @@ export default function Votings() {
                       >
                         Copy public results link
                       </button>
+                      <button
+                        type="button"
+                        className="inline-flex rounded bg-red-700 px-4 py-2 font-semibold text-white"
+                        onClick={onResetElection}
+                        disabled={resetVotes.isLoading}
+                      >
+                        {resetVotes.isLoading ? "Resetting..." : "Reset election"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                    <h4 className="text-lg font-semibold text-slate-900">
+                      Operator access
+                    </h4>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Operators can only sign in to the voter roster for the election
+                      you assign them to.
+                    </p>
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-sm font-semibold text-slate-900">
+                        Create operator account
+                      </p>
+                      <div className="mt-3 grid gap-3 lg:grid-cols-[1.2fr_1fr_auto]">
+                        <input
+                          type="email"
+                          value={operatorEmail}
+                          onChange={(event) => setOperatorEmail(event.target.value)}
+                          placeholder="operator@email.com"
+                          className="rounded border border-slate-300 bg-white px-3 py-2 text-slate-900"
+                        />
+                        <input
+                          type="password"
+                          value={operatorPassword}
+                          onChange={(event) => setOperatorPassword(event.target.value)}
+                          placeholder="Temporary password"
+                          className="rounded border border-slate-300 bg-white px-3 py-2 text-slate-900"
+                        />
+                        <button
+                          type="button"
+                          onClick={onCreateOperator}
+                          disabled={createOperator.isLoading}
+                          className="rounded bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                        >
+                          {createOperator.isLoading ? "Creating..." : "Create operator"}
+                        </button>
+                      </div>
+                      <p className="mt-2 text-xs text-slate-500">
+                        New operators are automatically assigned to this election.
+                      </p>
+                    </div>
+                    <div className="mt-4 grid gap-3">
+                      {((staffUsers as StaffUserRecord[] | undefined) || []).length === 0 && (
+                        <p className="text-sm text-slate-500">
+                          No staff users have signed in yet.
+                        </p>
+                      )}
+                      {((staffUsers as StaffUserRecord[] | undefined) || []).map((staffUser) => {
+                        const role = staffUser.role || "admin";
+                        const isCurrentUser = !!authStaff?.uid && authStaff.uid === staffUser.uid;
+                        const assignedHere =
+                          role === "operator" &&
+                          staffUser.assignedVotingId === selectedElection.id;
+
+                        return (
+                          <div
+                            key={staffUser.uid || staffUser.id}
+                            className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:flex-row lg:items-center lg:justify-between"
+                          >
+                            <div>
+                              <p className="font-semibold text-slate-900">
+                                {staffUser.email}
+                              </p>
+                              <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
+                                <span
+                                  className={`rounded-full px-2 py-1 font-semibold ${
+                                    role === "admin"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "bg-amber-100 text-amber-800"
+                                  }`}
+                                >
+                                  {role === "admin" ? "Admin" : "Operator"}
+                                </span>
+                                {staffUser.assignedVotingId && role === "operator" && (
+                                  <span className="rounded-full bg-slate-200 px-2 py-1 font-semibold text-slate-700">
+                                    Assigned election #{staffUser.assignedVotingId}
+                                  </span>
+                                )}
+                                {assignedHere && (
+                                  <span className="rounded-full bg-emerald-100 px-2 py-1 font-semibold text-emerald-800">
+                                    Assigned here
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {!isCurrentUser && (
+                                <>
+                                  <button
+                                    type="button"
+                                    className="rounded bg-amber-500 px-4 py-2 font-semibold text-slate-950"
+                                    onClick={() =>
+                                      updateStaffAccess.mutate({
+                                        staffUid: staffUser.uid as string,
+                                        role: "operator",
+                                        assignedVotingId: selectedElection.id,
+                                      })
+                                    }
+                                  >
+                                    Assign here as operator
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="rounded bg-slate-200 px-4 py-2 font-semibold text-slate-900"
+                                    onClick={() =>
+                                      updateStaffAccess.mutate({
+                                        staffUid: staffUser.uid as string,
+                                        role: "operator",
+                                        assignedVotingId: null,
+                                      })
+                                    }
+                                  >
+                                    Clear operator assignment
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="rounded bg-blue-600 px-4 py-2 font-semibold text-white"
+                                    onClick={() =>
+                                      updateStaffAccess.mutate({
+                                        staffUid: staffUser.uid as string,
+                                        role: "admin",
+                                        assignedVotingId: null,
+                                      })
+                                    }
+                                  >
+                                    Make admin
+                                  </button>
+                                </>
+                              )}
+                              {isCurrentUser && (
+                                <span className="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white">
+                                  Current user
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -759,6 +1046,28 @@ export default function Votings() {
                     <p className="text-sm text-gray-700">
                       Ready to import {previewRows.length} voters.
                     </p>
+                    {importProgress && (
+                      <div className="rounded border border-slate-200 bg-white p-3">
+                        <div className="mb-2 flex items-center justify-between text-sm font-medium text-slate-700">
+                          <span>Import progress</span>
+                          <span>
+                            {importProgress.imported} / {importProgress.total}
+                          </span>
+                        </div>
+                        <div className="h-3 overflow-hidden rounded-full bg-slate-200">
+                          <div
+                            className="h-full rounded-full bg-blue-600 transition-all"
+                            style={{
+                              width: `${
+                                importProgress.total === 0
+                                  ? 0
+                                  : (importProgress.imported / importProgress.total) * 100
+                              }%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
                     <button
                       type="button"
                       onClick={onImportVoters}

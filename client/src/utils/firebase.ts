@@ -16,8 +16,11 @@ const firebaseConfig = {
 };
 
 export const firebaseApp = initializeApp(firebaseConfig);
+export const firebaseDeviceApp = initializeApp(firebaseConfig, "device-session");
 export const firebaseAuth = getAuth(firebaseApp);
+export const firebaseDeviceAuth = getAuth(firebaseDeviceApp);
 export const firestore = getFirestore(firebaseApp);
+export const deviceFirestore = getFirestore(firebaseDeviceApp);
 export const firebaseFunctions = getFunctions(
   firebaseApp,
   import.meta.env.VITE_FIREBASE_FUNCTIONS_REGION || "us-central1"

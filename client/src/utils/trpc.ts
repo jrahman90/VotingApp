@@ -4,12 +4,14 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   assignVoterToDevice,
+  approveDeviceSession,
   clearElectionVoters,
   createPanelRecord,
   createVotingRecord,
+  createOperatorAccount,
   deletePanelRecord,
   deleteVotingRecord,
   getActiveVotingDetailed,
@@ -18,14 +20,19 @@ import {
   getVoterById,
   getVotingById,
   getVotingRoster,
+  getPublicResultsById,
+  getAllStaffRecords,
   importManyVotersToElection,
+  killDeviceSession,
   loginStaffWithFirebase,
   registerDeviceWithFirebase,
+  resetElectionVotes,
   setActiveVotingRecord,
   submitVoteRecord,
   subscribeToConnectedDevices,
   unassignDevice,
   unregisterDeviceWithFirebase,
+  updateStaffAccess,
   updatePanelRecord,
   updateVotingRecord,
 } from "./firebaseApi";
@@ -42,6 +49,7 @@ const queryKeys = {
   panelsAll: ["firebase", "panel", "all"] as const,
   voterById: (voterId?: number) => ["firebase", "voter", voterId] as const,
   devicesConnected: ["firebase", "devices", "connected"] as const,
+  staffAll: ["firebase", "staff", "all"] as const,
 };
 
 function invalidateFirebaseQueries(queryClientValue: QueryClient) {
@@ -89,6 +97,11 @@ function invalidateFirebaseQueries(queryClientValue: QueryClient) {
           queryClientValue.invalidateQueries({ queryKey: queryKeys.devicesConnected }),
       },
     },
+    staff: {
+      getAll: {
+        invalidate: () => queryClientValue.invalidateQueries({ queryKey: queryKeys.staffAll }),
+      },
+    },
   };
 }
 
@@ -102,6 +115,40 @@ export const TRPC_REACT = {
       useMutation(options?: Parameters<typeof useMutation>[0]) {
         return useMutation({
           mutationFn: loginStaffWithFirebase,
+          ...(options || {}),
+        });
+      },
+    },
+    getAll: {
+      useQuery() {
+        return useQuery({
+          queryKey: queryKeys.staffAll,
+          queryFn: getAllStaffRecords,
+        });
+      },
+    },
+    updateAccess: {
+      useMutation(options?: Parameters<typeof useMutation>[0]) {
+        const queryClientValue = useQueryClient();
+        return useMutation({
+          mutationFn: updateStaffAccess,
+          onSuccess(...args) {
+            queryClientValue.invalidateQueries({ queryKey: queryKeys.staffAll });
+            options?.onSuccess?.(...args as never);
+          },
+          ...(options || {}),
+        });
+      },
+    },
+    createOperator: {
+      useMutation(options?: Parameters<typeof useMutation>[0]) {
+        const queryClientValue = useQueryClient();
+        return useMutation({
+          mutationFn: createOperatorAccount,
+          onSuccess(...args) {
+            queryClientValue.invalidateQueries({ queryKey: queryKeys.staffAll });
+            options?.onSuccess?.(...args as never);
+          },
           ...(options || {}),
         });
       },
@@ -124,6 +171,21 @@ export const TRPC_REACT = {
         });
       },
     },
+    killSession: {
+      useMutation(options?: Parameters<typeof useMutation>[0]) {
+        const queryClientValue = useQueryClient();
+        return useMutation({
+          mutationFn: killDeviceSession,
+          onSuccess(...args) {
+            queryClientValue.invalidateQueries({ queryKey: queryKeys.devicesConnected });
+            queryClientValue.invalidateQueries({ queryKey: ["firebase", "voting", "roster"] });
+            queryClientValue.invalidateQueries({ queryKey: queryKeys.votingDetailed });
+            options?.onSuccess?.(...args as never);
+          },
+          ...(options || {}),
+        });
+      },
+    },
     assignVoter: {
       useMutation(options?: Parameters<typeof useMutation>[0]) {
         const queryClientValue = useQueryClient();
@@ -131,6 +193,22 @@ export const TRPC_REACT = {
           mutationFn: assignVoterToDevice,
           onSuccess(...args) {
             queryClientValue.invalidateQueries({ queryKey: queryKeys.devicesConnected });
+            queryClientValue.invalidateQueries({ queryKey: ["firebase", "voting", "roster"] });
+            queryClientValue.invalidateQueries({ queryKey: queryKeys.votingDetailed });
+            options?.onSuccess?.(...args as never);
+          },
+          ...(options || {}),
+        });
+      },
+    },
+    approveSession: {
+      useMutation(options?: Parameters<typeof useMutation>[0]) {
+        const queryClientValue = useQueryClient();
+        return useMutation({
+          mutationFn: approveDeviceSession,
+          onSuccess(...args) {
+            queryClientValue.invalidateQueries({ queryKey: queryKeys.devicesConnected });
+            queryClientValue.invalidateQueries({ queryKey: queryKeys.votingDetailed });
             options?.onSuccess?.(...args as never);
           },
           ...(options || {}),
@@ -144,6 +222,8 @@ export const TRPC_REACT = {
           mutationFn: unassignDevice,
           onSuccess(...args) {
             queryClientValue.invalidateQueries({ queryKey: queryKeys.devicesConnected });
+            queryClientValue.invalidateQueries({ queryKey: ["firebase", "voting", "roster"] });
+            queryClientValue.invalidateQueries({ queryKey: queryKeys.votingDetailed });
             options?.onSuccess?.(...args as never);
           },
           ...(options || {}),
@@ -158,14 +238,22 @@ export const TRPC_REACT = {
           onError?: (error: Error) => void;
         }
       ) {
+        const onDataRef = useRef(handlers.onData);
+        const onErrorRef = useRef(handlers.onError);
+
+        useEffect(() => {
+          onDataRef.current = handlers.onData;
+          onErrorRef.current = handlers.onError;
+        }, [handlers.onData, handlers.onError]);
+
         useEffect(() => {
           const unsubscribe = subscribeToConnectedDevices(
-            (devices) => handlers.onData?.(devices),
-            handlers.onError
+            (devices) => onDataRef.current?.(devices),
+            (error) => onErrorRef.current?.(error)
           );
 
           return () => unsubscribe();
-        }, [handlers]);
+        }, []);
       },
     },
   },
@@ -187,10 +275,11 @@ export const TRPC_REACT = {
       },
     },
     getOneDetailed: {
-      useQuery() {
+      useQuery(options?: { enabled?: boolean }) {
         return useQuery({
           queryKey: queryKeys.votingDetailed,
           queryFn: getActiveVotingDetailed,
+          enabled: options?.enabled ?? true,
         });
       },
     },
@@ -203,12 +292,26 @@ export const TRPC_REACT = {
         });
       },
     },
+    getPublicResults: {
+      useQuery(input: { votingId: number }, options?: { enabled?: boolean }) {
+        return useQuery({
+          queryKey: ["firebase", "voting", "publicResults", input?.votingId],
+          queryFn: () => getPublicResultsById(input.votingId),
+          enabled: options?.enabled ?? true,
+          retry: false,
+        });
+      },
+    },
     getRoster: {
       useQuery(input: { votingId: number }, options?: { enabled?: boolean }) {
         return useQuery({
           queryKey: queryKeys.votingRoster(input?.votingId),
           queryFn: () => getVotingRoster(input.votingId),
           enabled: options?.enabled ?? true,
+          retry: false,
+          staleTime: 0,
+          refetchOnWindowFocus: true,
+          refetchInterval: 5000,
         });
       },
     },
@@ -248,6 +351,14 @@ export const TRPC_REACT = {
       useMutation(options?: Parameters<typeof useMutation>[0]) {
         return useMutation({
           mutationFn: clearElectionVoters,
+          ...(options || {}),
+        });
+      },
+    },
+    resetVotes: {
+      useMutation(options?: Parameters<typeof useMutation>[0]) {
+        return useMutation({
+          mutationFn: resetElectionVotes,
           ...(options || {}),
         });
       },
@@ -309,8 +420,15 @@ export const TRPC_REACT = {
   vote: {
     vote: {
       useMutation(options?: Parameters<typeof useMutation>[0]) {
+        const queryClientValue = useQueryClient();
         return useMutation({
           mutationFn: submitVoteRecord,
+          onSuccess(...args) {
+            queryClientValue.invalidateQueries({ queryKey: queryKeys.votingDetailed });
+            queryClientValue.invalidateQueries({ queryKey: ["firebase", "voting", "roster"] });
+            queryClientValue.invalidateQueries({ queryKey: queryKeys.devicesConnected });
+            options?.onSuccess?.(...args as never);
+          },
           ...(options || {}),
         });
       },

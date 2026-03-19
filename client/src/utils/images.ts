@@ -1,4 +1,4 @@
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { firebaseStorage } from "./firebase";
 
 function sanitizeFileName(fileName: string) {
@@ -19,4 +19,32 @@ export async function uploadImageFile(
   });
 
   return getDownloadURL(storageRef);
+}
+
+function isFirebaseStorageUrl(url?: string | null) {
+  if (!url) {
+    return false;
+  }
+
+  return (
+    url.includes("firebasestorage.googleapis.com") ||
+    url.startsWith("gs://")
+  );
+}
+
+export async function deleteUploadedImage(url?: string | null) {
+  if (!isFirebaseStorageUrl(url)) {
+    return;
+  }
+
+  try {
+    await deleteObject(ref(firebaseStorage, url));
+  } catch (error) {
+    const storageError = error as { code?: string } | undefined;
+    if (storageError?.code === "storage/object-not-found") {
+      return;
+    }
+
+    throw error;
+  }
 }

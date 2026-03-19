@@ -8,6 +8,9 @@ interface IStaff {
   id: number;
   createdAt: string;
   updatedAt: string;
+  role?: "admin" | "operator";
+  assignedVotingId?: number | null;
+  uid?: string;
 }
 
 interface IDevice {
@@ -19,7 +22,7 @@ interface IDevice {
 
 // Define a type for the slice state
 interface AuthState {
-  type: "staff" | "device" | undefined;
+  type: "admin" | "operator" | "device" | undefined;
   staff: IStaff | undefined;
   device: IDevice | undefined;
 }
@@ -42,7 +45,7 @@ export const counterSlice = createSlice({
       state.device = undefined;
     },
     loginStaff: (state, action: PayloadAction<{ staff: IStaff }>) => {
-      state.type = "staff";
+      state.type = action.payload.staff.role === "operator" ? "operator" : "admin";
       state.staff = action.payload.staff;
     },
     registerDevice: (
