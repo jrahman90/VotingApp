@@ -451,25 +451,25 @@ export function VotingPage() {
                   </div>
                   <div className="flex justify-center pb-1">
                     <div
-                      className={`flex w-full max-w-[540px] flex-col items-stretch rounded-[1.75rem] bg-slate-950/90 shadow-2xl backdrop-blur sm:flex-row ${
+                      className={`flex w-full max-w-[760px] flex-col items-stretch rounded-[1.75rem] bg-slate-950/90 shadow-2xl backdrop-blur sm:flex-row ${
                         microCompactLayout
-                          ? "gap-1.5 px-3 py-2"
+                          ? "gap-2 px-4 py-3"
                         : ultraCompactLayout
-                            ? "gap-2 px-3.5 py-2.5"
+                            ? "gap-2.5 px-4.5 py-3"
                             : smallActionButtons
-                              ? "gap-2 px-3.5 py-2.5"
-                              : "gap-3 px-5 py-4"
+                              ? "gap-2.5 px-4.5 py-3"
+                              : "gap-4 px-6 py-5"
                       }`}
                     >
                       <button
                         className={`rounded-xl bg-slate-200 font-bold text-black hover:bg-slate-300 ${
                           microCompactLayout
-                            ? "w-full px-3 py-2 text-sm sm:min-w-[120px]"
+                            ? "w-full px-5 py-3 text-base sm:min-w-[180px]"
                           : ultraCompactLayout
-                              ? "w-full px-4 py-2 text-sm sm:min-w-[140px]"
+                              ? "w-full px-6 py-3 text-base sm:min-w-[210px]"
                               : smallActionButtons
-                                ? "w-full px-4 py-2 text-sm sm:min-w-[140px]"
-                                : "w-full px-5 py-3 text-lg sm:min-w-[160px]"
+                                ? "w-full px-6 py-3 text-base sm:min-w-[210px]"
+                                : "w-full px-7 py-4 text-xl sm:min-w-[260px]"
                         }`}
                         onClick={onClear}
                       >
@@ -478,12 +478,12 @@ export function VotingPage() {
                       <button
                         className={`rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-700 ${
                           microCompactLayout
-                            ? "w-full px-4 py-2 text-sm sm:min-w-[160px]"
+                            ? "w-full px-6 py-3 text-base sm:min-w-[230px]"
                           : ultraCompactLayout
-                              ? "w-full px-5 py-2 text-sm sm:min-w-[180px]"
+                              ? "w-full px-7 py-3 text-base sm:min-w-[260px]"
                               : smallActionButtons
-                                ? "w-full px-5 py-2 text-sm sm:min-w-[180px]"
-                                : "w-full px-6 py-3 text-lg sm:min-w-[220px]"
+                                ? "w-full px-7 py-3 text-base sm:min-w-[260px]"
+                                : "w-full px-8 py-4 text-xl sm:min-w-[320px]"
                         }`}
                         onClick={onVote}
                       >

@@ -88,7 +88,7 @@ export function CandidatesList({
             <div className="group relative">
               <div
                 className={`flex items-center ${
-                  microCompact ? "gap-1.5" : ultraCompact ? "gap-2" : "gap-2.5"
+                  microCompact ? "gap-2" : ultraCompact ? "gap-2.5" : "gap-3"
                 }`}
               >
                 <img
@@ -96,23 +96,23 @@ export function CandidatesList({
                   alt={panel.panelName}
                   className={`rounded-full object-cover bg-white/30 ${
                     microCompact
-                      ? "h-6 w-6"
+                      ? "h-10 w-10"
                       : ultraCompact
-                        ? "h-7 w-7"
+                        ? "h-12 w-12"
                         : compact
-                          ? "h-9 w-9"
-                          : "h-12 w-12"
+                          ? "h-14 w-14"
+                          : "h-16 w-16"
                   }`}
                 />
                 <h3
                   className={`font-semibold ${
                     microCompact
-                      ? "text-[0.82rem] leading-3.5"
+                      ? "text-[1.18rem] leading-5"
                       : ultraCompact
-                        ? "text-[0.92rem] leading-4"
+                        ? "text-[1.3rem] leading-5"
                         : compact
-                          ? "text-[1rem] leading-4"
-                          : "text-[1.15rem] leading-5"
+                          ? "text-[1.45rem] leading-6"
+                          : "text-[1.6rem] leading-7"
                   }`}
                 >
                   {panel.panelName}
@@ -200,34 +200,34 @@ export function CandidatesList({
                       alt={candidate.name}
                       className={`rounded-full object-cover bg-white/30 ${
                         microCompact
-                          ? "h-7 w-7"
+                          ? "h-12 w-12"
                           : ultraCompact
-                            ? "h-8 w-8"
+                            ? "h-14 w-14"
                             : compact
-                              ? "h-10 w-10"
-                              : "h-14 w-14"
+                              ? "h-16 w-16"
+                              : "h-20 w-20"
                       }`}
                     />
                     <div
                       className={`${
                         microCompact
-                          ? "text-[0.94rem] leading-4"
+                          ? "text-[1.1rem] leading-5"
                         : ultraCompact
-                            ? "text-[1.02rem] leading-4"
+                            ? "text-[1.22rem] leading-5"
                             : compact
-                              ? "text-[1.12rem] leading-4.5"
-                              : "text-[1.18rem] leading-5"
+                              ? "text-[1.35rem] leading-6"
+                              : "text-[1.48rem] leading-6"
                       }`}
                     >
                       <p
                         className={`font-semibold ${
                           microCompact
-                            ? "text-[0.98rem]"
+                            ? "text-[1.18rem]"
                           : ultraCompact
-                              ? "text-[1.08rem]"
+                              ? "text-[1.3rem]"
                               : compact
-                                ? "text-[1.16rem]"
-                                : "text-[1.26rem]"
+                                ? "text-[1.45rem]"
+                                : "text-[1.62rem]"
                         }`}
                       >
                         <span className="absolute inset-0" />
@@ -236,12 +236,12 @@ export function CandidatesList({
                       <p
                         className={`mt-0.5 font-medium uppercase tracking-[0.08em] opacity-90 ${
                           microCompact
-                            ? "text-[0.74rem]"
+                            ? "text-[0.9rem]"
                           : ultraCompact
-                              ? "text-[0.8rem]"
+                              ? "text-[1rem]"
                               : compact
-                                ? "text-[0.88rem]"
-                                : "text-[1rem]"
+                                ? "text-[1.08rem]"
+                                : "text-[1.18rem]"
                         }`}
                       >
                         {candidate.position}
