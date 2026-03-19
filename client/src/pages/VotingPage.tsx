@@ -61,6 +61,10 @@ export function VotingPage() {
 
   const [devices, setDevices] = useState<OnlineDevice[]>([]);
   const [hasLoadedDevices, setHasLoadedDevices] = useState(false);
+  const [viewportSize, setViewportSize] = useState(() => ({
+    width: typeof window === "undefined" ? 1440 : window.innerWidth,
+    height: typeof window === "undefined" ? 900 : window.innerHeight,
+  }));
 
   TRPC_REACT.device.getConnectedDevices.useSubscription(undefined, {
     onData(data) {
@@ -73,6 +77,18 @@ export function VotingPage() {
       setHasLoadedDevices(true);
     },
   });
+
+  useEffect(() => {
+    const onResize = () => {
+      setViewportSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     if (!device?.name || !hasLoadedDevices) {
@@ -123,8 +139,22 @@ export function VotingPage() {
 
   const isEnabled = !!voterId;
   const panelCount = votingData?.Panels.length || 0;
-  const compactLayout = panelCount >= 4;
-  const ultraCompactLayout = panelCount >= 5;
+  const compactLayout =
+    panelCount >= 4 ||
+    viewportSize.width < 1380 ||
+    viewportSize.height < 900;
+  const ultraCompactLayout =
+    panelCount >= 5 ||
+    viewportSize.width < 1180 ||
+    viewportSize.height < 820;
+  const microCompactLayout =
+    panelCount >= 5 ||
+    viewportSize.width < 1080 ||
+    viewportSize.height < 760;
+  const smallActionButtons =
+    viewportSize.width <= 1366 ||
+    viewportSize.height <= 1024 ||
+    compactLayout;
 
   const positionOrder = Array.from(
     new Set(
@@ -233,9 +263,13 @@ export function VotingPage() {
       {!isError && !showPageLoading && (!currentDevice || isApproved) && (
         <div
           className={`mx-auto flex min-h-screen max-w-[1600px] flex-col ${
-            ultraCompactLayout
-              ? "px-2 py-2 md:px-3 md:py-3"
-              : "px-3 py-3 md:px-4 md:py-4"
+            microCompactLayout
+              ? "px-1.5 py-1.5 sm:px-2 sm:py-2"
+              : ultraCompactLayout
+                ? "px-2 py-2 md:px-3 md:py-3"
+                : compactLayout
+                  ? "px-2.5 py-2.5 md:px-3.5 md:py-3.5"
+                  : "px-3 py-3 md:px-4 md:py-4"
           } lg:h-full`}
         >
           {!data && (
@@ -250,83 +284,132 @@ export function VotingPage() {
               className={`flex flex-1 flex-col ${ultraCompactLayout ? "gap-2" : "gap-3"} lg:min-h-0`}
             >
               <div
-                className={`rounded-[2rem] bg-white/88 shadow-2xl backdrop-blur ${
-                  ultraCompactLayout ? "p-3 md:p-3.5" : compactLayout ? "p-3.5 md:p-4" : "p-4 md:p-5"
+                className={`rounded-[1.15rem] bg-white/84 shadow-2xl backdrop-blur ${
+                  microCompactLayout
+                    ? "p-1"
+                    : ultraCompactLayout
+                      ? "p-1.5"
+                      : "p-2"
                 }`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="max-w-4xl">
-                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
-                      Active Election
-                    </p>
-                    <h1
-                      className={`mt-1 font-bold tracking-tight text-slate-900 ${
-                        ultraCompactLayout
-                          ? "text-xl md:text-2xl"
-                          : compactLayout
-                            ? "text-2xl md:text-[1.7rem]"
-                            : "text-2xl md:text-3xl"
-                      }`}
-                    >
-                      {votingData?.name}
-                    </h1>
-                  </div>
-                </div>
-
                 <div
-                  className={`grid gap-3 ${
-                    ultraCompactLayout
-                      ? "mt-3 md:grid-cols-2 xl:grid-cols-[0.8fr_2fr]"
-                      : "mt-4 md:grid-cols-2 xl:grid-cols-[0.8fr_2fr]"
+                  className={`grid items-stretch gap-1.5 ${
+                    microCompactLayout
+                      ? "md:grid-cols-[158px_minmax(0,1fr)]"
+                      : ultraCompactLayout
+                        ? "md:grid-cols-[170px_minmax(0,1fr)]"
+                        : "md:grid-cols-[185px_minmax(0,1fr)]"
                   }`}
                 >
                   <div
-                    className={`rounded-2xl bg-slate-900 text-white shadow-lg ${
-                      ultraCompactLayout ? "p-3" : compactLayout ? "p-3.5" : "p-4"
+                    className={`rounded-[0.95rem] bg-slate-900 text-white shadow-lg ${
+                      microCompactLayout
+                        ? "p-1.5"
+                        : ultraCompactLayout
+                          ? "p-1.5"
+                          : "px-2 py-1.5"
                     }`}
                   >
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-300">
+                    <p className="text-[0.58rem] font-semibold uppercase tracking-[0.24em] text-slate-300">
                       Device
                     </p>
-                    <p className={`mt-1 font-semibold ${ultraCompactLayout ? "text-base" : "text-lg"}`}>
+                    <p
+                      className={`mt-0.5 font-semibold ${
+                        microCompactLayout
+                          ? "text-[0.78rem]"
+                          : ultraCompactLayout
+                            ? "text-[0.82rem]"
+                            : "text-[0.88rem]"
+                      }`}
+                    >
                       {device?.name}
                     </p>
-                    <p className={`text-xs uppercase tracking-[0.2em] text-slate-300 ${ultraCompactLayout ? "mt-2" : "mt-3"}`}>
-                      Voter Number
-                    </p>
-                    <p className={`mt-1 font-bold ${ultraCompactLayout ? "text-lg" : "text-xl"}`}>
-                      {voterId ?? "Not assigned"}
-                    </p>
+                    <div className="mt-1.5 border-t border-white/10 pt-1.5">
+                      <p className="text-[0.58rem] font-semibold uppercase tracking-[0.24em] text-slate-300">
+                        Voter Number
+                      </p>
+                      <p
+                        className={`mt-0.5 font-bold ${
+                          microCompactLayout
+                            ? "text-[0.86rem]"
+                            : ultraCompactLayout
+                              ? "text-[0.9rem]"
+                              : "text-[0.96rem]"
+                        }`}
+                      >
+                        {voterId ?? "Not assigned"}
+                      </p>
+                    </div>
                   </div>
 
                   <div
-                    className={`rounded-2xl bg-white shadow-lg ${
-                      ultraCompactLayout ? "p-3" : compactLayout ? "p-3.5" : "p-4"
+                    className={`rounded-[0.95rem] bg-white shadow-lg ${
+                      microCompactLayout
+                        ? "p-1.5"
+                      : ultraCompactLayout
+                          ? "p-1.5"
+                          : "px-2.5 py-2"
                     }`}
                   >
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                      Voter Details
-                    </p>
+                    <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
+                      <div className="min-w-0">
+                        <p className="text-[0.58rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                          Active Election
+                        </p>
+                        <h1
+                          className={`mt-0.5 truncate font-bold tracking-tight text-slate-900 ${
+                            microCompactLayout
+                              ? "text-[0.9rem]"
+                              : ultraCompactLayout
+                                ? "text-[0.96rem]"
+                                : "text-[1.02rem]"
+                          }`}
+                        >
+                          {votingData?.name}
+                        </h1>
+                      </div>
+                      <p className="pt-0.5 text-[0.58rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        Voter Details
+                      </p>
+                    </div>
                     {assignedVoter ? (
-                      <div
-                        className={`mt-2 grid gap-x-4 text-slate-700 md:grid-cols-2 ${
-                          ultraCompactLayout ? "gap-y-0.5 text-xs" : "gap-y-1 text-sm"
-                        }`}
-                      >
-                        <p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-slate-700">
+                        <p
+                          className={`truncate ${
+                            microCompactLayout
+                              ? "max-w-full text-[0.68rem]"
+                              : ultraCompactLayout
+                                ? "max-w-[48%] text-[0.72rem]"
+                                : "max-w-[48%] text-[0.75rem]"
+                          }`}
+                        >
                           <b>Name:</b> {assignedVoter.firstAndMiddleName}{" "}
                           {assignedVoter.lastName}
                         </p>
-                        <p>
+                        <p
+                          className={`truncate ${
+                            microCompactLayout
+                              ? "max-w-full text-[0.68rem]"
+                              : ultraCompactLayout
+                                ? "max-w-[34%] text-[0.72rem]"
+                                : "max-w-[34%] text-[0.75rem]"
+                          }`}
+                        >
                           <b>Phone:</b> {assignedVoter.phone}
                         </p>
-                        <p className="md:col-span-2">
+                        <p
+                          className={`truncate ${
+                            microCompactLayout
+                              ? "w-full text-[0.68rem]"
+                              : "w-full text-[0.72rem]"
+                          }`}
+                        >
                           <b>Address:</b> {assignedVoter.streetAddress},{" "}
                           {assignedVoter.city}, {assignedVoter.state}
                         </p>
                       </div>
                     ) : (
-                      <p className="mt-3 text-sm text-slate-600">
+                      <p className="mt-1.5 text-[0.72rem] text-slate-600">
                         Assign a voter from the admin screen to unlock this
                         ballot.
                       </p>
@@ -346,28 +429,47 @@ export function VotingPage() {
               {isEnabled && (
                 <React.Fragment>
                   <div
-                    className={`flex-1 rounded-[2rem] bg-white/82 shadow-2xl backdrop-blur ${
-                      ultraCompactLayout ? "p-2.5 md:p-3" : compactLayout ? "p-3 md:p-3.5" : "p-3 md:p-4"
-                    } overflow-y-auto lg:min-h-0`}
+                    className={`flex-1 rounded-[1.8rem] bg-white/82 shadow-2xl backdrop-blur ${
+                      microCompactLayout
+                        ? "p-1.5"
+                      : ultraCompactLayout
+                          ? "p-2"
+                          : compactLayout
+                            ? "p-2.5"
+                            : "p-3.5 md:p-4"
+                    } overflow-hidden lg:min-h-0`}
                   >
                     <CandidatesList
                       panels={votingData?.Panels || []}
                       selection={selection}
                       setSelection={onSelection}
                       panelCount={panelCount}
+                      compactLayout={compactLayout}
+                      ultraCompactLayout={ultraCompactLayout}
+                      microCompactLayout={microCompactLayout}
                     />
                   </div>
                   <div className="flex justify-center pb-1">
                     <div
                       className={`flex w-full max-w-[540px] flex-col items-stretch rounded-[1.75rem] bg-slate-950/90 shadow-2xl backdrop-blur sm:flex-row ${
-                        ultraCompactLayout ? "gap-2 px-4 py-3" : "gap-3 px-5 py-4"
+                        microCompactLayout
+                          ? "gap-1.5 px-3 py-2"
+                        : ultraCompactLayout
+                            ? "gap-2 px-3.5 py-2.5"
+                            : smallActionButtons
+                              ? "gap-2 px-3.5 py-2.5"
+                              : "gap-3 px-5 py-4"
                       }`}
                     >
                       <button
                         className={`rounded-xl bg-slate-200 font-bold text-black hover:bg-slate-300 ${
-                          ultraCompactLayout
-                            ? "w-full px-4 py-2.5 text-base sm:min-w-[140px]"
-                            : "w-full px-5 py-3 text-lg sm:min-w-[160px]"
+                          microCompactLayout
+                            ? "w-full px-3 py-2 text-sm sm:min-w-[120px]"
+                          : ultraCompactLayout
+                              ? "w-full px-4 py-2 text-sm sm:min-w-[140px]"
+                              : smallActionButtons
+                                ? "w-full px-4 py-2 text-sm sm:min-w-[140px]"
+                                : "w-full px-5 py-3 text-lg sm:min-w-[160px]"
                         }`}
                         onClick={onClear}
                       >
@@ -375,9 +477,13 @@ export function VotingPage() {
                       </button>
                       <button
                         className={`rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-700 ${
-                          ultraCompactLayout
-                            ? "w-full px-5 py-2.5 text-base sm:min-w-[180px]"
-                            : "w-full px-6 py-3 text-lg sm:min-w-[220px]"
+                          microCompactLayout
+                            ? "w-full px-4 py-2 text-sm sm:min-w-[160px]"
+                          : ultraCompactLayout
+                              ? "w-full px-5 py-2 text-sm sm:min-w-[180px]"
+                              : smallActionButtons
+                                ? "w-full px-5 py-2 text-sm sm:min-w-[180px]"
+                                : "w-full px-6 py-3 text-lg sm:min-w-[220px]"
                         }`}
                         onClick={onVote}
                       >
